@@ -13,7 +13,7 @@ Special thanks to:
 
 * **[CIAT - Africa](http://ciat.cgiar.org/):** Remote Sensing/GIS Section, Soils Research Area/DAPA
 
-And those who supported and enouraged the us to challenge ourselves to do better and to be better. 
+And those who supported and enouraged us to challenge ourselves to do better and to be better. 
 
 ## Contributing 
 
