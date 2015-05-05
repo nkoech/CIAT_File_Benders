@@ -1,0 +1,37 @@
+{
+	"workspace":[
+		{
+			"wrk_pace":"D:/TRIAL"
+		}
+	],
+	"input_Feature":[
+		{
+			"in_Feature":"172_060_unsup1_v.shp"
+		}
+	],	
+	"output_Location":[
+		{
+			"out_loc":"D:/TRIAL/Test"
+		}
+	],
+	"greater_than":[
+		{
+			"gt":"45000"
+		}
+	],
+	"less_than":[
+		{
+			"lt":"90000"
+		}
+	],
+	"class_Field":[
+		{
+			"cls_field":"GRIDCODE"
+		}
+	],
+	"area_Field":[
+		{
+			"area":"AREA"
+		}
+	]
+}

@@ -1,0 +1,14 @@
+Instruction
+============
+
+1. Make sure the .json file is in the same directory/folder with the script
+2. Open the .json file with a text editing application e.g. Notepad and set all 
+   your parameters appropriately
+
+NOTE: As you set your parameters in the .json file be carefully not to delete the quotes
+
+This script is intended for general use and no warranty is implied for
+suitability to any given task. Please feel free to copy/paste/edit to suit your
+needs and remember to share ;)
+
+Enjoy! Nicholas {-Creskit-}

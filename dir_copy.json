@@ -1,0 +1,17 @@
+{
+	"src":[
+		{
+			"src_dir":"D:/Data/Modis"
+		}
+	],
+	"dest":[
+		{
+			"dest_dir":"Z:/Soils_GIS/GIS/Tana NEW/MODIS/Updated Outputs/UPDATED_Processed_MOD13Q1_NDVI"
+		}
+	],
+	"dir_startswith":[
+		{
+			"dir_param":"MOD_TIFF_"
+		}
+	]
+}

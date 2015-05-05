@@ -1,0 +1,12 @@
+{
+	"source":[
+		{
+			"source_dir":"C:/CCAFS_DATA/LULC_30m/"
+		}
+	],
+	"destination":[
+		{
+			"dest_dir":"D:/Junk/GCL30_Extracts/"
+		}
+	]
+}
