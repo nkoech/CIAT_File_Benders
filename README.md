@@ -7,14 +7,6 @@ These are scripts that will help you handle repititive binary file manipulation 
 
 Please check inside the scripts for the required libraries.
 
-## Contributors 
-
-Special thanks to:
-
-* **[CIAT - Africa](http://ciat.cgiar.org/):** Remote Sensing/GIS Section, Soils Research Area/DAPA
-
-And those who supported and enouraged us to challenge ourselves to do better and to be better. 
-
 ## Contributing 
 
 Feel free to fork, send pull requests or report bugs and issues on github.
