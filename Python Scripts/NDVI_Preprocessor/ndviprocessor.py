@@ -36,8 +36,11 @@ class NDVIProcessor:
             for file_name in os.listdir(source_dir):
                 if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
                     file_path = os.path.join(source_dir, file_name).replace('\\', '/')
-                    desc = arcpy.Describe(file_path)
-                    current_ref = desc.spatialReference
+                    try:
+                        desc = arcpy.Describe(file_path)
+                        current_ref = desc.spatialReference
+                    except IOError as (e):
+                        print(str(e) + " or is invalid/corrupted. Remove the bad file and run the process again")
                     target_ref_name = self.target_ref.split('[')[1].split(',')[0].strip("'")
                     if not os.path.exists(self.dest_dir):
                         os.makedirs(self.dest_dir)
