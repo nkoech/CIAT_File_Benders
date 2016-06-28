@@ -1,17 +1,17 @@
 {
 	"src":[
 		{
-			"src_dir":"D:/Data/Data/LDN_Namibia/Biophysical"
+			"src_dir":"D:/Data/Data/LDN_Namibia"
 		}
 	],
 	"dest":[
 		{
-			"dest_dir":"D:/Data/Data/LDN_Namibia/Biophysical/NDVI_Modis/AOI_NDVI"
+			"dest_dir":"D:/Data/Data/LDN_Namibia/Biophysical/NDVI_Modis/Test/AOI_NDVI"
 		}
 	],
 	"dir_startswith":[
 		{
-			"dir_param":"NDVI"
+			"dir_param":"Tes"
 		}
 	],
 	"file_startswith":[
