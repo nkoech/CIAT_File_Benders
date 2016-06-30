@@ -22,7 +22,7 @@ class NDVIProcessor:
     def _get_user_parameters(self):
         """Get contents from a Json file"""
         tool_settings = {}
-        data = get_json_data("dir_meta", ".json")
+        data = get_json_data('dir_meta', '.json')
         for key_1, key_2 in zip(self.first_level_key, self.second_level_key):
             for key in data[key_1]:
                 value = key[key_2]
@@ -40,7 +40,7 @@ class NDVIProcessor:
                         os.makedirs(self.dest_dir)
                     current_ref, target_ref_name = self._get_spatial_ref(file_path, self.target_ref)
                     self.geoprocess_raster(file_name, current_ref, target_ref_name, file_path)
-        print("RASTER PROCESSING COMPLETED SUCCESSFULLY!!!")
+        print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def validate_raster(self):
         """ First check for  invalid/corrupted raster data """
@@ -50,7 +50,7 @@ class NDVIProcessor:
                 if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
                     file_path = os.path.join(source_dir, file_name).replace('\\', '/')
                     self._get_spatial_ref(file_path)
-                    print("Validated..... {0}".format(file_name))
+                    print('Validated..... {0}'.format(file_name))
 
     def _get_spatial_ref(self, file_path, target_ref=None):
         """ Get raster spatial reference """
@@ -63,35 +63,44 @@ class NDVIProcessor:
             else:
                 return
         except IOError as (e):
-            print(str(e) + " or is invalid/corrupted. Remove the bad file and run the process again")
+            print(str(e) + ' or is invalid/corrupted. Remove the bad file and run the process again')
 
     def geoprocess_raster(self, file_name, current_ref, target_ref_name, file_path):
-        """ Project, calculate float values and clip raster to the area of interest """
+        """ Reproject, calculate float values, clip raster to the area of interest, set bad values to null """
         proj_out_ras = self.dest_dir + '/PROJ_' + file_name
         try:
             if current_ref.name != target_ref_name:
+                # Reproject input raster
                 print('Projecting..... {0} from {1} to {2}'.format(file_name, current_ref.name, target_ref_name))
                 arcpy.ProjectRaster_management(file_path, proj_out_ras, '"' + self.target_ref + '"', '', '', '', '', current_ref)
-                print('Calculating float values for..... PROJ_{0}'.format(file_name))
+
+                # Map algebra to convert from integer to float NDVI values
+                print('Converting to NDVI values..... PROJ_{0}'.format(file_name))
                 float_out_ras = (Raster(proj_out_ras) - 50) / 200.0
                 ndvi_out_ras = self.dest_dir + '/NDVI_' + file_name
                 print('Saving rescaled raster..... {0}'.format('NDVI_' + file_name))
                 float_out_ras.save(ndvi_out_ras)
                 arcpy.Delete_management(proj_out_ras)
-                clip_out_ras = self.dest_dir + '/AOI_NDVI_' + file_name
+
+                # Clip raster to area of interest
+                clip_out_ras = self.dest_dir + '/CLIPPED_NDVI_' + file_name
                 if self.clip_poly and self.clip_poly.endswith('.shp'):
                     if arcpy.Exists(self.clip_poly):
-                        print('Clipping..... {0} to {1}'.format('NDVI_' + file_name, 'AOI_NDVI_' + file_name))
+                        print('Clipping..... {0} to {1}'.format('NDVI_' + file_name, 'CLIPPED_NDVI_' + file_name))
                         arcpy.Clip_management(ndvi_out_ras, '#', clip_out_ras, self.clip_poly, "", 'ClippingGeometry')
                         arcpy.Delete_management(ndvi_out_ras)
-                        # print('Condition for {0}'.format('AOI_NDVI_' + file_name))
-                        # con_out_ras = self.dest_dir + '/CON_NDVI_' + file_name
-                        # out_set_null = SetNull(clip_out_ras, clip_out_ras, "VALUE > 1" or "VALUE < -1")
-                        # out_set_null.save(con_out_ras)
                     else:
                         raise ValueError('Clipping FAILED! Clipping feature class does not exist')
                 else:
                     raise ValueError('Clipping FAILED! Clipping geometry not provided')
+
+                # Set bad values to null
+                masked_out_ras = self.dest_dir + '/MASKED_NDVI_' + file_name
+                print('Removing bad NDVI values..... {0}'.format('CLIPPED_NDVI_' + file_name))
+                out_set_null = SetNull(clip_out_ras, clip_out_ras, "VALUE > 1" or "VALUE < -1")
+                print('Saving masked raster..... {0}'.format('MASKED_NDVI_' + file_name))
+                out_set_null.save(masked_out_ras)
+                arcpy.Delete_management(clip_out_ras)
             else:
                 raise ValueError('Raster processing FAILED! {0} projection is similar to that of the target reference.'.format(current_ref.name))
         except ValueError as e:
