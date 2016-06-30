@@ -6,7 +6,7 @@
 	],
 	"dest":[
 		{
-			"dest_dir":"D:/Data/Data/LDN_Namibia/Biophysical/NDVI_Modis/Test/AOI_NDVI"
+			"dest_dir":"D:/Data/Data/LDN_Namibia/Biophysical/Original_NDVI_Modis/Test/AOI_NDVI"
 		}
 	],
 	"dir_startswith":[
@@ -31,7 +31,7 @@
 	],
 	"clip_geometry":[
 		{
-			"clip_poly":"D:/Data/Data/LDN_Namibia/Administrative/Boundaries/Otjozondjupa_Region_buffer.shp"
+			"clip_poly":"D:/Data/Data/LDN_Namibia/Administrative/Boundaries/Otjozondjupa_Region_33S.shp"
 		}
 	]
 }

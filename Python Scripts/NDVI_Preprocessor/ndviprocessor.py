@@ -36,16 +36,32 @@ class NDVIProcessor:
             for file_name in os.listdir(source_dir):
                 if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
                     file_path = os.path.join(source_dir, file_name).replace('\\', '/')
-                    try:
-                        desc = arcpy.Describe(file_path)
-                        current_ref = desc.spatialReference
-                    except IOError as (e):
-                        print(str(e) + " or is invalid/corrupted. Remove the bad file and run the process again")
-                    target_ref_name = self.target_ref.split('[')[1].split(',')[0].strip("'")
                     if not os.path.exists(self.dest_dir):
                         os.makedirs(self.dest_dir)
+                    current_ref, target_ref_name = self.get_spatial_ref(file_path, self.target_ref)
                     self.geoprocess_raster(file_name, current_ref, target_ref_name, file_path)
         print("RASTER PROCESSING COMPLETED SUCCESSFULLY!!!")
+
+    # def check_invalid_raster(self):
+    #     """ First check for  invalid/corrupted raster data """
+    #     root_dir = get_directory(self.src, self.dir_startswith)
+    #     for source_dir in root_dir:
+    #         for file_name in os.listdir(source_dir):
+    #             if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
+    #                 file_path = os.path.join(source_dir, file_name).replace('\\', '/')
+
+    def get_spatial_ref(self, file_path, target_ref=None):
+        """ Get raster spatial reference """
+        try:
+            desc = arcpy.Describe(file_path)
+            current_ref = desc.spatialReference
+            if target_ref:
+                target_ref_name = target_ref.split('[')[1].split(',')[0].strip("'")
+                return current_ref, target_ref_name
+            else:
+                return current_ref
+        except IOError as (e):
+            print(str(e) + " or is invalid/corrupted. Remove the bad file and run the process again")
 
     def geoprocess_raster(self, file_name, current_ref, target_ref_name, file_path):
         """ Project, calculate float values and clip raster to the area of interest """
@@ -66,6 +82,10 @@ class NDVIProcessor:
                         print('Clipping..... {0} to {1}'.format('NDVI_' + file_name, 'AOI_NDVI_' + file_name))
                         arcpy.Clip_management(ndvi_out_ras, '#', clip_out_ras, self.clip_poly, "", 'ClippingGeometry')
                         arcpy.Delete_management(ndvi_out_ras)
+                        # print('Condition for {0}'.format('AOI_NDVI_' + file_name))
+                        # con_out_ras = self.dest_dir + '/CON_NDVI_' + file_name
+                        # out_set_null = SetNull(clip_out_ras, clip_out_ras, "VALUE > 1" or "VALUE < -1")
+                        # out_set_null.save(con_out_ras)
                     else:
                         raise ValueError('Clipping FAILED! Clipping feature class does not exist')
                 else:
