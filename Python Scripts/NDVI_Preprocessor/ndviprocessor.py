@@ -17,7 +17,8 @@ class NDVIProcessor:
         self.file_endswith = self.tool_settings['file_end']
         self.dest_dir = self.tool_settings['dest_dir']
         self.target_ref = self.tool_settings['target_ref']
-        self.clip_poly = self.tool_settings['clip_poly']
+        self.clip_poly = self.tool_settings['aoi_poly']
+        self.place_name = self.tool_settings['aoi_place_name']
 
     def _get_user_parameters(self):
         """Get contents from a Json file"""
@@ -66,53 +67,77 @@ class NDVIProcessor:
             print(str(e) + ' or is invalid/corrupted. Remove the bad file and run the process again')
 
     def geoprocess_raster(self, file_name, current_ref, target_ref_name, file_path):
-        """ Reproject, calculate float values, clip raster to the area of interest, set bad values to null """
-        proj_out_ras = self.dest_dir + '/PROJ_' + file_name
+        """ Raster geoprocessing interface """
         try:
             if current_ref.name != target_ref_name:
-                # Reproject input raster
-                print('Projecting..... {0} from {1} to {2}'.format(file_name, current_ref.name, target_ref_name))
-                arcpy.ProjectRaster_management(file_path, proj_out_ras, '"' + self.target_ref + '"', '', '', '', '', current_ref)
 
-                # Map algebra to convert from integer to float NDVI values
-                print('Converting to NDVI values..... PROJ_{0}'.format(file_name))
-                float_out_ras = (Raster(proj_out_ras) - 50) / 200.0
-                ndvi_out_ras = self.dest_dir + '/NDVI_' + file_name
-                print('Saving rescaled raster..... {0}'.format('NDVI_' + file_name))
-                float_out_ras.save(ndvi_out_ras)
+                # Reproject input raster
+                proj_out_ras = self._reproject_raster(file_name, current_ref, target_ref_name, file_path)
+
+                # Convert raster values to float values
+                ndvi_out_ras = self._raster_to_float(file_name, proj_out_ras)
                 arcpy.Delete_management(proj_out_ras)
 
                 # Clip raster to area of interest
-                clip_out_ras = self.dest_dir + '/CLIPPED_NDVI_' + file_name
-                if self.clip_poly and self.clip_poly.endswith('.shp'):
-                    if arcpy.Exists(self.clip_poly):
-                        print('Clipping..... {0} to {1}'.format('NDVI_' + file_name, 'CLIPPED_NDVI_' + file_name))
-                        arcpy.Clip_management(ndvi_out_ras, '#', clip_out_ras, self.clip_poly, "", 'ClippingGeometry')
-                        arcpy.Delete_management(ndvi_out_ras)
-                    else:
-                        raise ValueError('Clipping FAILED! Clipping feature class does not exist')
-                else:
-                    raise ValueError('Clipping FAILED! Clipping geometry not provided')
+                clip_out_ras = self. _clip_raster(file_name, ndvi_out_ras)
+                arcpy.Delete_management(ndvi_out_ras)
 
-                # Set bad values to null
-                masked_out_ras = self.dest_dir + '/MASKED_NDVI_' + file_name
-                print('Removing bad NDVI values..... {0}'.format('CLIPPED_NDVI_' + file_name))
-                out_set_null = SetNull(clip_out_ras, clip_out_ras, "VALUE > 1" or "VALUE < -1")
-                print('Saving masked raster..... {0}'.format('MASKED_NDVI_' + file_name))
-                out_set_null.save(masked_out_ras)
+                # Set bad raster values to null
+                masked_out_ras = self._raster_setnull(file_name, clip_out_ras)
                 arcpy.Delete_management(clip_out_ras)
             else:
                 raise ValueError('Raster processing FAILED! {0} projection is similar to that of the target reference.'.format(current_ref.name))
         except ValueError as e:
             print(e)
 
+    def _reproject_raster(self, file_name, current_ref, target_ref_name, file_path):
+        """ Reproject raster """
+        proj_out_ras = self.dest_dir + '/PROJ_' + file_name
+        print('Projecting..... {0} from {1} to {2}'.format(file_name, current_ref.name, target_ref_name))
+        arcpy.ProjectRaster_management(file_path, proj_out_ras, '"' + self.target_ref + '"', '', '', '', '', current_ref)
+        return proj_out_ras
+
+    def _raster_to_float(self, file_name, proj_out_ras):
+        """ Convert integer raster values to float values """
+        print('Converting to NDVI values..... PROJ_{0}'.format(file_name))
+        float_out_ras = (Raster(proj_out_ras) - 50) / 200.0
+        ndvi_out_ras = self.dest_dir + '/NDVI_' + file_name
+        print('Saving rescaled raster..... {0}'.format('NDVI_' + file_name))
+        float_out_ras.save(ndvi_out_ras)
+        return ndvi_out_ras
+
+    def _clip_raster(self, file_name, ndvi_out_ras):
+        """ Clip raster to area of interest """
+        clip_out_ras = self.dest_dir + '/CLIPPED_NDVI_' + file_name
+        if self.clip_poly and self.clip_poly.endswith('.shp'):
+            if arcpy.Exists(self.clip_poly):
+                print('Clipping..... {0} to {1}'.format('NDVI_' + file_name, 'CLIPPED_NDVI_' + file_name))
+                arcpy.Clip_management(ndvi_out_ras, '#', clip_out_ras, self.clip_poly, "", 'ClippingGeometry')
+            else:
+                raise ValueError('Clipping FAILED! Clipping feature class does not exist')
+        else:
+            raise ValueError('Clipping FAILED! Clipping geometry not provided')
+        return clip_out_ras
+
+    def _raster_setnull(self, file_name, clip_out_ras):
+        """ Set raster values to null values """
+        where_clause_val1 = "VALUE > 1"
+        where_clause_val2 = "VALUE < -1"
+        masked_file = self.place_name + '_NDVI_' + file_name[-53:]
+        masked_out_ras = self.dest_dir + '/' + masked_file
+        print('Removing bad NDVI values..... {0}'.format('CLIPPED_NDVI_' + file_name))
+        out_set_null = SetNull(clip_out_ras, clip_out_ras, where_clause_val1 or where_clause_val2)
+        print('Saving masked raster..... {0}'.format(masked_file))
+        out_set_null.save(masked_out_ras)
+        return masked_out_ras
+
 
 def main():
     """Main program"""
     env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
-    first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'target_reference', 'clip_geometry']
-    second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'clip_poly']
+    first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'target_reference', 'aoi_geometry', 'aoi_name']
+    second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'aoi_poly', 'aoi_place_name']
     read_file = NDVIProcessor(first_level_key, second_level_key)
     read_file.validate_raster()
     read_file.init_geoprocess_raster()
