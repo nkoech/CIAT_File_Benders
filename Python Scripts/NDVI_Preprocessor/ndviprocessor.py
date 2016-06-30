@@ -38,19 +38,21 @@ class NDVIProcessor:
                     file_path = os.path.join(source_dir, file_name).replace('\\', '/')
                     if not os.path.exists(self.dest_dir):
                         os.makedirs(self.dest_dir)
-                    current_ref, target_ref_name = self.get_spatial_ref(file_path, self.target_ref)
+                    current_ref, target_ref_name = self._get_spatial_ref(file_path, self.target_ref)
                     self.geoprocess_raster(file_name, current_ref, target_ref_name, file_path)
         print("RASTER PROCESSING COMPLETED SUCCESSFULLY!!!")
 
-    # def check_invalid_raster(self):
-    #     """ First check for  invalid/corrupted raster data """
-    #     root_dir = get_directory(self.src, self.dir_startswith)
-    #     for source_dir in root_dir:
-    #         for file_name in os.listdir(source_dir):
-    #             if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
-    #                 file_path = os.path.join(source_dir, file_name).replace('\\', '/')
+    def validate_raster(self):
+        """ First check for  invalid/corrupted raster data """
+        root_dir = get_directory(self.src, self.dir_startswith)
+        for source_dir in root_dir:
+            for file_name in os.listdir(source_dir):
+                if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
+                    file_path = os.path.join(source_dir, file_name).replace('\\', '/')
+                    self._get_spatial_ref(file_path)
+                    print("Validated..... {0}".format(file_name))
 
-    def get_spatial_ref(self, file_path, target_ref=None):
+    def _get_spatial_ref(self, file_path, target_ref=None):
         """ Get raster spatial reference """
         try:
             desc = arcpy.Describe(file_path)
@@ -59,7 +61,7 @@ class NDVIProcessor:
                 target_ref_name = target_ref.split('[')[1].split(',')[0].strip("'")
                 return current_ref, target_ref_name
             else:
-                return current_ref
+                return
         except IOError as (e):
             print(str(e) + " or is invalid/corrupted. Remove the bad file and run the process again")
 
@@ -103,6 +105,7 @@ def main():
     first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'target_reference', 'clip_geometry']
     second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'clip_poly']
     read_file = NDVIProcessor(first_level_key, second_level_key)
+    read_file.validate_raster()
     read_file.init_geoprocess_raster()
 
 if __name__ == '__main__':
