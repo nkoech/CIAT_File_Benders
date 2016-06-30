@@ -10,7 +10,7 @@ class NDVIProcessor:
     def __init__(self, first_level_key, second_level_key):
         self.first_level_key = first_level_key
         self.second_level_key = second_level_key
-        self.tool_settings = self.get_data()
+        self.tool_settings = self._get_user_parameters()
         self.src = self.tool_settings['src_dir']
         self.dir_startswith = self.tool_settings['dir_param']
         self.file_startswith = self.tool_settings['file_start']
@@ -19,7 +19,7 @@ class NDVIProcessor:
         self.target_ref = self.tool_settings['target_ref']
         self.clip_poly = self.tool_settings['clip_poly']
 
-    def get_data(self):
+    def _get_user_parameters(self):
         """Get contents from a Json file"""
         tool_settings = {}
         data = get_json_data("dir_meta", ".json")
