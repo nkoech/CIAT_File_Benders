@@ -1,17 +1,17 @@
 {
 	"src":[
 		{
-			"src_dir":"D:/Data/Data/LDN_Namibia"
+			"src_dir":"D:/Data/Data/GIZ_IASS_CIAT"
 		}
 	],
 	"dest":[
 		{
-			"dest_dir":"D:/Data/Data/LDN_Namibia/Biophysical/Original_NDVI_Modis/Test/AOI_NDVI"
+			"dest_dir":"D:/Data/Data/GIZ_IASS_CIAT/NDVI/Kenya/AOI_NDVI"
 		}
 	],
 	"dir_startswith":[
 		{
-			"dir_param":"Tes"
+			"dir_param":"Ken"
 		}
 	],
 	"file_startswith":[
@@ -26,17 +26,22 @@
 	],
 	"target_reference":[
 		{
-			"target_ref":"PROJCS['WGS_1984_UTM_Zone_33S',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',10000000.0],PARAMETER['Central_Meridian',15.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]"
+			"target_ref":"GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433],METADATA['World',-180.0,-90.0,180.0,90.0,0.0,0.0174532925199433,0.0,1262]]"
 		}
 	],
 	"aoi_geometry":[
 		{
-			"aoi_poly":"D:/Data/Data/LDN_Namibia/Administrative/Boundaries/Otjozondjupa_Region_33S.shp"
+			"aoi_poly":"D:/Data/Data/GIZ_IASS_CIAT/Administrative/KEN_Ilemi_Admin_0.shp"
 		}
 	],
 	"aoi_name":[
 		{
-			"aoi_place_name":"Otjozondjupa"
+			"aoi_place_name":"KEN"
+		}
+	],
+	"mosaic":[
+		{
+			"mosaic_operation":true
 		}
 	]
 }
