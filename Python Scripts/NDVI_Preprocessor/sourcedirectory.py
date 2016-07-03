@@ -8,7 +8,11 @@ def get_directory(src, dir_startswith):
             for root_path, dirs, files in os.walk(src):
                 if dirs:
                     for dir_name in dirs:
-                        if dir_name.startswith(dir_startswith):
+                        if dir_startswith:
+                            if dir_name.startswith(dir_startswith):
+                                src_dir = os.path.join(root_path, dir_name).replace('\\', '/')
+                                yield src_dir
+                        else:
                             src_dir = os.path.join(root_path, dir_name).replace('\\', '/')
                             yield src_dir
                 else:
