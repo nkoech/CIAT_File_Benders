@@ -41,7 +41,7 @@
 	],
 	"mosaic":[
 		{
-			"mosaic_operation":true
+			"mosaic_operation":false
 		}
 	]
 }

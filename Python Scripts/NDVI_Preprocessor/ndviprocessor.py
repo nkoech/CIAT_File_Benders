@@ -47,9 +47,10 @@ class NDVIProcessor:
                         self.mosaic_rasters(file_path)
                     else:
                         self.geoprocess_raster(file_path)
-        if self.mos_out_ras:
-            for mos_file_path in self.mos_out_ras:
-                self.geoprocess_raster(mos_file_path)
+        if self.mosaic_operation:
+            if self.mos_out_ras:
+                for mos_file_path in self.mos_out_ras:
+                    self.geoprocess_raster(mos_file_path)
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def validate_raster(self):
@@ -135,11 +136,9 @@ class NDVIProcessor:
         """ Raster geoprocessing interface """
         current_ref, target_ref_name = self._get_spatial_ref(file_path, self.target_ref)
         file_name = ntpath.basename(file_path)[5:]
-        proj_out_ras = ""
-
-        if self.mosaic_operation:
-            proj_out_ras = file_path
-        else:
+        proj_out_ras = file_path
+        if not self.mosaic_operation:
+            file_name = ntpath.basename(file_path)
             try:
                 if current_ref.name != target_ref_name:
                     # Reproject input raster
@@ -160,7 +159,9 @@ class NDVIProcessor:
         # Set bad raster values to null
         where_clause_val1 = "VALUE > 1"
         where_clause_val2 = "VALUE < -1"
-        masked_file = self.place_name + file_name[-53:]
+        masked_file = self.place_name + file_name[-54:]
+        if self.mosaic_operation:
+            masked_file = self.place_name + file_name[-53:]
         masked_out_ras = self._raster_setnull(clip_out_ras, masked_file, where_clause_val1, where_clause_val2)
         arcpy.Delete_management(clip_out_ras)
 
