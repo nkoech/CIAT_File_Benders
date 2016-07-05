@@ -5,6 +5,7 @@ from arcpy.sa import *
 from arcpy import env
 from readjson import get_json_data
 from sourcedirectory import get_directory
+from filelocation import get_file_location
 
 
 class NDVIProcessor:
@@ -37,16 +38,13 @@ class NDVIProcessor:
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
         root_dir = get_directory(self.src, self.dir_startswith)
-        for source_dir in root_dir:
-            for file_name in os.listdir(source_dir):
-                if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
-                    file_path = os.path.join(source_dir, file_name).replace('\\', '/')
-                    if not os.path.exists(self.dest_dir):
-                        os.makedirs(self.dest_dir)
-                    if self.mosaic_operation:
-                        self.mosaic_rasters(file_path)
-                    else:
-                        self.geoprocess_raster(file_path)
+        for file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
+            if not os.path.exists(self.dest_dir):
+                os.makedirs(self.dest_dir)
+            if self.mosaic_operation:
+                self.mosaic_rasters(file_path)
+            else:
+                self.geoprocess_raster(file_path)
         if self.mosaic_operation:
             if self.mos_out_ras:
                 for mos_file_path in self.mos_out_ras:
@@ -56,12 +54,9 @@ class NDVIProcessor:
     def validate_raster(self):
         """ First check for  invalid/corrupted raster data """
         root_dir = get_directory(self.src, self.dir_startswith)
-        for source_dir in root_dir:
-            for file_name in os.listdir(source_dir):
-                if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
-                    file_path = os.path.join(source_dir, file_name).replace('\\', '/')
-                    self._get_spatial_ref(file_path)
-                    print('Validated..... {0}'.format(file_name))
+        for file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
+            self._get_spatial_ref(file_path)
+            print('Validated..... {0}'.format(file_name))
 
     def mosaic_rasters(self, file_path):
         """ Get rasters and stitch them together """
