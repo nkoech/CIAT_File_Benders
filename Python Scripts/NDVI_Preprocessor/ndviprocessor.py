@@ -24,7 +24,7 @@ class NDVIProcessor:
         self.clip_poly = self.tool_settings['aoi_poly']
         self.place_name = self.tool_settings['aoi_place_name']
         self.mosaic_operation = self.tool_settings['mosaic_operation']
-        self.max_val_comp = self.tool_settings['max_val_comp']
+        self.max_val_comp = self.tool_settings['max_value_composite']
 
     def _get_user_parameters(self):
         """Get contents from a Json file"""
@@ -65,19 +65,20 @@ class NDVIProcessor:
 
     def mosaic_rasters(self, file_path, file_name_date):
         """ Get rasters and stitch them together """
-        #file_name = ntpath.basename(file_path)
-        #if self.mosaic_operation:
         masked_file_paths = ""
-        #file_name_date = file_name.split('.')[1]
+        if self.max_val_comp and not self.mosaic_operation:
+            file_name_date = file_name_date[:4]
         try:
             if int(file_name_date):
+                print(self.file_date_id)
                 if self.file_date_id:
                     if file_name_date not in set(self.file_date_id):
                         masked_file_paths = self._mosaic_geoprocessing(file_path)
                 else:
                     masked_file_paths = self._mosaic_geoprocessing(file_path)
-                for masked_file in masked_file_paths:
-                    arcpy.Delete_management(masked_file)
+                if masked_file_paths:
+                    for masked_file in masked_file_paths:
+                        arcpy.Delete_management(masked_file)
             else:
                 raise TypeError("Input file split fail. {0} is not an integer. Fix your file naming to that of MODIS file convention".format(file_name_date))
         except TypeError as e:
@@ -86,19 +87,27 @@ class NDVIProcessor:
     def _mosaic_geoprocessing(self, file_path):
         """ Stitch several rasters together """
         masked_file_paths = []
-        file_name = ntpath.basename(file_path)
-        mos_out_ras_name = 'MOSK_' + file_name[:11] + file_name[-53:]
+        file_name_id = ntpath.basename(file_path)
+        mos_out_ras_name = 'MOSK_' + file_name_id[:11] + file_name_id[-53:]
+        if self.max_val_comp and not self.mosaic_operation:
+            mos_out_ras_name = 'MVC.' + file_name_id[:8] + file_name_id[-45:]
         mos_out_ras_file = self.dest_dir + '/' + mos_out_ras_name
 
-        for file_paths in self._init_mosaic_raster(file_name):
+        for file_paths in self._init_mosaic_raster(file_name_id):
             if file_paths:
                 current_ref, target_ref_name = self._get_spatial_ref(file_paths[0], self.target_ref)
-                pixel_type = '8_BIT_UNSIGNED'
-                mosaic_operator = 'LAST'
-                self._mosaic_to_new_raster_gp(file_paths, self.dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator)
-                self.mos_out_ras.append(mos_out_ras_file)
-                masked_file_paths.extend(file_paths)
-        return masked_file_paths
+                if self.mosaic_operation:
+                    pixel_type = '8_BIT_UNSIGNED'
+                    mosaic_operator = 'LAST'
+                    self._mosaic_to_new_raster_gp(file_paths, self.dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator)
+                    self.mos_out_ras.append(mos_out_ras_file)
+                    masked_file_paths.extend(file_paths)
+                else:
+                    if self.max_val_comp:
+                        print('Processing cell statistics for..... {0}'.format(mos_out_ras_name))
+                        arcpy.gp.CellStatistics_sa(file_paths, mos_out_ras_file, "MAXIMUM", "DATA")
+        if masked_file_paths:
+            return masked_file_paths
 
     def _mosaic_to_new_raster_gp(self, file_paths, dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator):
         """ Mosaic to new operator geoprocessor """
@@ -113,15 +122,27 @@ class NDVIProcessor:
             for file_name in os.listdir(source_dir):
                 if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
                     file_name_date = file_name.split('.')[1]
+                    file_name_date_id = file_name_date
                     if file_name == init_file_name:
-                        masked_out_ras = self._init_mosaic_geoprocess(source_dir, file_name)
-                        file_paths.append(masked_out_ras)
-                        if file_name_date not in set(self.file_date_id):
-                            self.file_date_id.append(file_name_date)
-                    else:
-                        if file_name_date == init_file_name.split('.')[1]:
+                        masked_out_ras = os.path.join(source_dir, file_name).replace('\\', '/')
+                        if self.mosaic_operation:
                             masked_out_ras = self._init_mosaic_geoprocess(source_dir, file_name)
+                        elif self.max_val_comp and not self.mosaic_operation:
+                            file_name_date_id = file_name_date[:4]
+                        file_paths.append(masked_out_ras)
+                        if file_name_date_id not in set(self.file_date_id):
+                            self.file_date_id.append(file_name_date_id)
+                    else:
+                        init_file_name_date = init_file_name.split('.')[1]
+                        if file_name_date == init_file_name_date:
+                            masked_out_ras = os.path.join(source_dir, file_name).replace('\\', '/')
+                            if self.mosaic_operation:
+                                masked_out_ras = self._init_mosaic_geoprocess(source_dir, file_name)
                             file_paths.append(masked_out_ras)
+                        elif file_name_date[:4] == init_file_name_date[:4]:
+                            if self.max_val_comp and not self.mosaic_operation:
+                                masked_out_ras = os.path.join(source_dir, file_name).replace('\\', '/')
+                                file_paths.append(masked_out_ras)
         yield file_paths
 
     def _init_mosaic_geoprocess(self, source_dir, file_name):
@@ -134,9 +155,7 @@ class NDVIProcessor:
             if current_ref.name != target_ref_name:
                 proj_out_ras = self._reproject_raster(current_ref, target_ref_name, file_path)  # Reproject raster
             else:
-                raise ValueError(
-                    'Raster processing FAILED! {0} projection is similar to that of the target reference.'.format(
-                        current_ref.name))
+                raise ValueError('Raster processing FAILED! {0} projection is similar to that of the target reference.'.format(current_ref.name))
         except ValueError as e:
             print (e)
         masked_file = 'MASKED_' + file_name
@@ -245,7 +264,7 @@ def main():
     env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
     first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'target_reference', 'aoi_geometry', 'aoi_name', 'mosaic', 'max_composite']
-    second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'aoi_poly', 'aoi_place_name', 'mosaic_operation', 'max_val_comp']
+    second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'aoi_poly', 'aoi_place_name', 'mosaic_operation', 'max_value_composite']
     read_file = NDVIProcessor(first_level_key, second_level_key)
     read_file.validate_raster()
     read_file.init_geoprocess_raster()

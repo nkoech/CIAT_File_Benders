@@ -1,22 +1,22 @@
 {
 	"src":[
 		{
-			"src_dir":"D:/Data/Data/GIZ_IASS_CIAT"
+			"src_dir":"C:/Data"
 		}
 	],
 	"dest":[
 		{
-			"dest_dir":"D:/Data/Data/GIZ_IASS_CIAT/NDVI/Kenya/AOI_NDVI"
+			"dest_dir":"C:/Data/Maximum_Values/Test"
 		}
 	],
 	"dir_startswith":[
 		{
-			"dir_param":"Ken"
+			"dir_param":"Maxim"
 		}
 	],
 	"file_startswith":[
 		{
-			"file_start":"africa_"
+			"file_start":"KEN."
 		}
 	],
 	"file_endswith":[
@@ -41,7 +41,7 @@
 	],
 	"mosaic":[
 		{
-			"mosaic_operation":true
+			"mosaic_operation":false
 		}
 	],
 	"max_composite":[
