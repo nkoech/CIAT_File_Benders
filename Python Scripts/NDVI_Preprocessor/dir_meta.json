@@ -43,5 +43,10 @@
 		{
 			"mosaic_operation":true
 		}
+	],
+	"max_composite":[
+		{
+			"max_value_composite":true
+		}
 	]
 }

@@ -24,6 +24,7 @@ class NDVIProcessor:
         self.clip_poly = self.tool_settings['aoi_poly']
         self.place_name = self.tool_settings['aoi_place_name']
         self.mosaic_operation = self.tool_settings['mosaic_operation']
+        self.max_val_comp = self.tool_settings['max_val_comp']
 
     def _get_user_parameters(self):
         """Get contents from a Json file"""
@@ -39,10 +40,14 @@ class NDVIProcessor:
         """ Initialize raster geoprocessing """
         root_dir = get_directory(self.src, self.dir_startswith)
         for file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
+            file_name = ntpath.basename(file_path)
+            file_name_date = file_name.split('.')[1]
             if not os.path.exists(self.dest_dir):
                 os.makedirs(self.dest_dir)
             if self.mosaic_operation:
-                self.mosaic_rasters(file_path)
+                self.mosaic_rasters(file_path, file_name_date)
+            elif self.max_val_comp and not self.mosaic_operation:
+                self.mosaic_rasters(file_path, file_name_date)
             else:
                 self.geoprocess_raster(file_path)
         if self.mosaic_operation:
@@ -58,19 +63,25 @@ class NDVIProcessor:
             self._get_spatial_ref(file_path)
             print('Validated..... {0}'.format(file_name))
 
-    def mosaic_rasters(self, file_path):
+    def mosaic_rasters(self, file_path, file_name_date):
         """ Get rasters and stitch them together """
-        file_name = ntpath.basename(file_path)
-        if self.mosaic_operation:
-            masked_file_paths = ""
-            file_name_date = file_name.split('.')[1]
-            if self.file_date_id:
-                if file_name_date not in set(self.file_date_id):
+        #file_name = ntpath.basename(file_path)
+        #if self.mosaic_operation:
+        masked_file_paths = ""
+        #file_name_date = file_name.split('.')[1]
+        try:
+            if int(file_name_date):
+                if self.file_date_id:
+                    if file_name_date not in set(self.file_date_id):
+                        masked_file_paths = self._mosaic_geoprocessing(file_path)
+                else:
                     masked_file_paths = self._mosaic_geoprocessing(file_path)
+                for masked_file in masked_file_paths:
+                    arcpy.Delete_management(masked_file)
             else:
-                masked_file_paths = self._mosaic_geoprocessing(file_path)
-            for masked_file in masked_file_paths:
-                arcpy.Delete_management(masked_file)
+                raise TypeError("Input file split fail. {0} is not an integer. Fix your file naming to that of MODIS file convention".format(file_name_date))
+        except TypeError as e:
+            print(e)
 
     def _mosaic_geoprocessing(self, file_path):
         """ Stitch several rasters together """
@@ -92,7 +103,7 @@ class NDVIProcessor:
     def _mosaic_to_new_raster_gp(self, file_paths, dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator):
         """ Mosaic to new operator geoprocessor """
         print('Mosaic raster..... {0}'.format(mos_out_ras_name))
-        arcpy.MosaicToNewRaster_management(file_paths, self.dest_dir, mos_out_ras_name, current_ref, pixel_type, '', '1', mosaic_operator, 'FIRST')
+        arcpy.MosaicToNewRaster_management(file_paths, dest_dir, mos_out_ras_name, current_ref, pixel_type, '', '1', mosaic_operator, 'FIRST')
 
     def _init_mosaic_raster(self, init_file_name):
         """ Get files to be stitched and preprocess them """
@@ -233,8 +244,8 @@ def main():
     """Main program"""
     env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
-    first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'target_reference', 'aoi_geometry', 'aoi_name', 'mosaic']
-    second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'aoi_poly', 'aoi_place_name', 'mosaic_operation']
+    first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'target_reference', 'aoi_geometry', 'aoi_name', 'mosaic', 'max_composite']
+    second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'aoi_poly', 'aoi_place_name', 'mosaic_operation', 'max_val_comp']
     read_file = NDVIProcessor(first_level_key, second_level_key)
     read_file.validate_raster()
     read_file.init_geoprocess_raster()
