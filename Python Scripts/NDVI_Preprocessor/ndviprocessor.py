@@ -193,14 +193,20 @@ class NDVIProcessor:
     def _clip_raster(self, ndvi_out_ras):
         """ Clip raster to area of interest """
         clip_out_ras = self.dest_dir + '/CLIPPED_' + ntpath.basename(ndvi_out_ras)[5:]
-        if self.clip_poly and self.clip_poly.endswith('.shp'):
-            if arcpy.Exists(self.clip_poly):
-                print('Clipping..... {0} to {1}'.format(ntpath.basename(ndvi_out_ras), ntpath.basename(clip_out_ras)))
-                arcpy.Clip_management(ndvi_out_ras, '#', clip_out_ras, self.clip_poly, "", 'ClippingGeometry')
+        try:
+            if self.clip_poly and self.clip_poly.endswith('.shp'):
+                try:
+                    if arcpy.Exists(self.clip_poly):
+                        print('Clipping..... {0} to {1}'.format(ntpath.basename(ndvi_out_ras), ntpath.basename(clip_out_ras)))
+                        arcpy.Clip_management(ndvi_out_ras, '#', clip_out_ras, self.clip_poly, "", 'ClippingGeometry')
+                    else:
+                        raise IOError('Clipping FAILED! Clipping feature class {0} does not exist'.format(self.clip_poly))
+                except IOError as e:
+                    print(e)
             else:
-                raise ValueError('Clipping FAILED! Clipping feature class does not exist')
-        else:
-            raise ValueError('Clipping FAILED! Clipping geometry not provided')
+                raise ValueError('Clipping FAILED! Clipping geometry not provided')
+        except ValueError as e:
+            print(e)
         return clip_out_ras
 
     def _raster_setnull(self, in_ras, masked_file, where_clause_val1, where_clause_val2=None):
