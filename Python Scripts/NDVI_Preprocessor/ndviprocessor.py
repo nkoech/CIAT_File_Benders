@@ -80,13 +80,19 @@ class NDVIProcessor:
         mos_out_ras_file = self.dest_dir + '/' + mos_out_ras_name
 
         for file_paths in self._init_mosaic_raster(file_name):
-            print('Mosaic raster..... {0}'.format(mos_out_ras_name))
             if file_paths:
                 current_ref, target_ref_name = self._get_spatial_ref(file_paths[0], self.target_ref)
-                arcpy.MosaicToNewRaster_management(file_paths, self.dest_dir, mos_out_ras_name, current_ref, '8_BIT_UNSIGNED', '', '1', 'LAST', 'FIRST')
+                pixel_type = '8_BIT_UNSIGNED'
+                mosaic_operator = 'LAST'
+                self._mosaic_to_new_raster_gp(file_paths, self.dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator)
                 self.mos_out_ras.append(mos_out_ras_file)
                 masked_file_paths.extend(file_paths)
         return masked_file_paths
+
+    def _mosaic_to_new_raster_gp(self, file_paths, dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator):
+        """ Mosaic to new operator geoprocessor """
+        print('Mosaic raster..... {0}'.format(mos_out_ras_name))
+        arcpy.MosaicToNewRaster_management(file_paths, self.dest_dir, mos_out_ras_name, current_ref, pixel_type, '', '1', mosaic_operator, 'FIRST')
 
     def _init_mosaic_raster(self, init_file_name):
         """ Get files to be stitched and preprocess them """
