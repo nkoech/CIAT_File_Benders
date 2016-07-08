@@ -1,7 +1,0 @@
-# Compiled source #
-###################
-*.pyc
-
-# IDE  generated #
-###################
-.idea
