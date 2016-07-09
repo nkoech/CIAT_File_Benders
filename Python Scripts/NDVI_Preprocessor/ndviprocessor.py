@@ -14,6 +14,7 @@ class NDVIProcessor:
         self.second_level_key = second_level_key
         self.file_date_id = []
         self.mos_out_ras = []
+        self.clean_ras = []
         self.tool_settings = self._get_user_parameters()
         self.src = self.tool_settings['src_dir']
         self.dir_startswith = self.tool_settings['dir_param']
@@ -44,16 +45,24 @@ class NDVIProcessor:
             file_name_date = file_name.split('.')[1]
             if not os.path.exists(self.dest_dir):
                 os.makedirs(self.dest_dir)
-            if self.mosaic_operation:
-                self._init_stitch_rasters(file_path, file_name_date)
-            elif self.max_val_composite and not self.mosaic_operation:
+            if self.mosaic_operation or self.max_val_composite:
                 self._init_stitch_rasters(file_path, file_name_date)
             else:
                 self.geoprocess_raster(file_path)
+
+        # Perform basic preprocessing
         if self.mosaic_operation:
             if self.mos_out_ras:
                 for mos_file_path in self.mos_out_ras:
                     self.geoprocess_raster(mos_file_path)
+
+        # Perform cell statistics
+        if self.mosaic_operation and self.max_val_composite:
+            if self.clean_ras:
+                self.mosaic_operation = False
+                for clean_file_path in self.clean_ras:
+                    file_name_date = ntpath.basename(clean_file_path).split('.')[1]
+                    self._init_stitch_rasters(clean_file_path, file_name_date)
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def validate_data(self):
@@ -132,9 +141,6 @@ class NDVIProcessor:
         """ Get files to be stitched and to calculate maximum values from """
         file_paths = []
         root_dir = get_directory(self.src, self.dir_startswith)
-        # for source_dir in root_dir:
-        #     for file_name in os.listdir(source_dir):
-        #         if file_name.startswith(self.file_startswith) & file_name.endswith(self.file_endswith):
         for source_dir, file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
             file_name_date = file_name.split('.')[1]
             file_name_date_id = file_name_date
@@ -209,6 +215,7 @@ class NDVIProcessor:
         if self.mosaic_operation:
             masked_file = self.place_name + file_name[-53:]
         masked_out_ras = self._raster_setnull(clip_out_ras, masked_file, where_clause_val1, where_clause_val2)
+        self.clean_ras.append(masked_out_ras)
         arcpy.Delete_management(clip_out_ras)
 
     def _get_spatial_ref(self, file_path, target_ref=None):
