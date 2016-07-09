@@ -24,7 +24,7 @@ class NDVIProcessor:
         self.clip_poly = self.tool_settings['aoi_poly']
         self.place_name = self.tool_settings['aoi_place_name']
         self.mosaic_operation = self.tool_settings['mosaic_operation']
-        self.max_val_comp = self.tool_settings['max_value_composite']
+        self.max_val_composite = self.tool_settings['max_value_composite']
 
     def _get_user_parameters(self):
         """Get contents from a Json file"""
@@ -45,9 +45,9 @@ class NDVIProcessor:
             if not os.path.exists(self.dest_dir):
                 os.makedirs(self.dest_dir)
             if self.mosaic_operation:
-                self.mosaic_rasters(file_path, file_name_date)
-            elif self.max_val_comp and not self.mosaic_operation:
-                self.mosaic_rasters(file_path, file_name_date)
+                self._mosaic_mvc_rasters(file_path, file_name_date)
+            elif self.max_val_composite and not self.mosaic_operation:
+                self._mosaic_mvc_rasters(file_path, file_name_date)
             else:
                 self.geoprocess_raster(file_path)
         if self.mosaic_operation:
@@ -63,14 +63,13 @@ class NDVIProcessor:
             self._get_spatial_ref(file_path)
             print('Validated..... {0}'.format(file_name))
 
-    def mosaic_rasters(self, file_path, file_name_date):
-        """ Get rasters and stitch them together """
+    def _mosaic_mvc_rasters(self, file_path, file_name_date):
+        """ Get rasters to stitch, calculate 'Maximum Cell Statistics' stitch them together """
         masked_file_paths = ""
-        if self.max_val_comp and not self.mosaic_operation:
+        if self.max_val_composite and not self.mosaic_operation:
             file_name_date = file_name_date[:4]
         try:
             if int(file_name_date):
-                print(self.file_date_id)
                 if self.file_date_id:
                     if file_name_date not in set(self.file_date_id):
                         masked_file_paths = self._mosaic_geoprocessing(file_path)
@@ -89,7 +88,7 @@ class NDVIProcessor:
         masked_file_paths = []
         file_name_id = ntpath.basename(file_path)
         mos_out_ras_name = 'MOSK_' + file_name_id[:11] + file_name_id[-53:]
-        if self.max_val_comp and not self.mosaic_operation:
+        if self.max_val_composite and not self.mosaic_operation:
             mos_out_ras_name = 'MVC.' + file_name_id[:8] + file_name_id[-45:]
         mos_out_ras_file = self.dest_dir + '/' + mos_out_ras_name
 
@@ -103,7 +102,7 @@ class NDVIProcessor:
                     self.mos_out_ras.append(mos_out_ras_file)
                     masked_file_paths.extend(file_paths)
                 else:
-                    if self.max_val_comp:
+                    if self.max_val_composite and not self.mosaic_operation:
                         print('Processing cell statistics for..... {0}'.format(mos_out_ras_name))
                         arcpy.gp.CellStatistics_sa(file_paths, mos_out_ras_file, "MAXIMUM", "DATA")
         if masked_file_paths:
@@ -127,7 +126,7 @@ class NDVIProcessor:
                         masked_out_ras = os.path.join(source_dir, file_name).replace('\\', '/')
                         if self.mosaic_operation:
                             masked_out_ras = self._init_mosaic_geoprocess(source_dir, file_name)
-                        elif self.max_val_comp and not self.mosaic_operation:
+                        elif self.max_val_composite and not self.mosaic_operation:
                             file_name_date_id = file_name_date[:4]
                         file_paths.append(masked_out_ras)
                         if file_name_date_id not in set(self.file_date_id):
@@ -140,7 +139,7 @@ class NDVIProcessor:
                                 masked_out_ras = self._init_mosaic_geoprocess(source_dir, file_name)
                             file_paths.append(masked_out_ras)
                         elif file_name_date[:4] == init_file_name_date[:4]:
-                            if self.max_val_comp and not self.mosaic_operation:
+                            if self.max_val_composite and not self.mosaic_operation:
                                 masked_out_ras = os.path.join(source_dir, file_name).replace('\\', '/')
                                 file_paths.append(masked_out_ras)
         yield file_paths
