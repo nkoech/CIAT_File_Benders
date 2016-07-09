@@ -1,3 +1,9 @@
+__author__ = "Koech Nicholas"
+__copyright__ = "Copyright 2016"
+__email__ = "koechnicholas@gmail.com"
+__status__ = "draft"
+
+
 import os
 import arcpy
 import ntpath
@@ -135,10 +141,12 @@ class NDVIProcessor:
 
         # Set MVC output file name
         if self.max_val_composite and not self.mosaic_operation:
+            first_name_text = file_name_id.split('.')[0]
+            text_length = len(first_name_text)
             if os.path.exists(mvc_dest_dir):
-                stitch_out_ras_name = mvc_output_dir + '/MVC.' + file_name_id[:8] + file_name_id[-45:]
+                stitch_out_ras_name = mvc_output_dir + '/MVC.' + file_name_id[:text_length + 5] + file_name_id[-45:]
             else:
-                stitch_out_ras_name = 'MVC.' + file_name_id[:8] + file_name_id[-45:]
+                stitch_out_ras_name = 'MVC.' + file_name_id[:text_length + 5] + file_name_id[-45:]
         return stitch_out_ras_name
 
     def _mosaic_to_new_raster(self, file_paths, dest_dir, stitch_out_ras_name, current_ref, pixel_type, mosaic_operator):
