@@ -45,9 +45,9 @@ class NDVIProcessor:
             if not os.path.exists(self.dest_dir):
                 os.makedirs(self.dest_dir)
             if self.mosaic_operation:
-                self._stitch_rasters(file_path, file_name_date)
+                self._init_stitch_rasters(file_path, file_name_date)
             elif self.max_val_composite and not self.mosaic_operation:
-                self._stitch_rasters(file_path, file_name_date)
+                self._init_stitch_rasters(file_path, file_name_date)
             else:
                 self.geoprocess_raster(file_path)
         if self.mosaic_operation:
@@ -68,7 +68,7 @@ class NDVIProcessor:
         except ValueError as e:
             print(e)
 
-    def _stitch_rasters(self, file_path, file_name_date):
+    def _init_stitch_rasters(self, file_path, file_name_date):
         """ Get rasters to stitch, calculate 'Maximum Cell Statistics'"""
         masked_file_paths = ""
         if self.max_val_composite and not self.mosaic_operation:
@@ -77,9 +77,9 @@ class NDVIProcessor:
             if int(file_name_date):
                 if self.file_date_id:
                     if file_name_date not in set(self.file_date_id):
-                        masked_file_paths = self._mosaic_geoprocessing(file_path)
+                        masked_file_paths = self._stitch_rasters(file_path)
                 else:
-                    masked_file_paths = self._mosaic_geoprocessing(file_path)
+                    masked_file_paths = self._stitch_rasters(file_path)
                 if masked_file_paths:
                     for masked_file in masked_file_paths:
                         arcpy.Delete_management(masked_file)
@@ -88,37 +88,47 @@ class NDVIProcessor:
         except TypeError as e:
             print(e)
 
-    def _mosaic_geoprocessing(self, file_path):
-        """ Stitch several rasters together """
+    def _stitch_rasters(self, file_path):
+        """ Stitch several rasters together, calculate maximum value statistics """
         masked_file_paths = []
         file_name_id = ntpath.basename(file_path)
-        mos_out_ras_name = 'MOSK_' + file_name_id[:11] + file_name_id[-53:]
+        stitch_out_ras_name = 'MOSK_' + file_name_id[:11] + file_name_id[-53:]
         if self.max_val_composite and not self.mosaic_operation:
-            mos_out_ras_name = 'MVC.' + file_name_id[:8] + file_name_id[-45:]
-        mos_out_ras_file = self.dest_dir + '/' + mos_out_ras_name
+            stitch_out_ras_name = 'MVC.' + file_name_id[:8] + file_name_id[-45:]
+        stitch_out_ras_file = self.dest_dir + '/' + stitch_out_ras_name
 
-        for file_paths in self._get_file_to_stitch(file_name_id):
+        for file_paths in self._get_stitch_files(file_name_id):
             if file_paths:
                 current_ref, target_ref_name = self._get_spatial_ref(file_paths[0], self.target_ref)
                 if self.mosaic_operation:
                     pixel_type = '8_BIT_UNSIGNED'
                     mosaic_operator = 'LAST'
-                    self._mosaic_to_new_raster_gp(file_paths, self.dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator)
-                    self.mos_out_ras.append(mos_out_ras_file)
+                    self._mosaic_to_new_raster(file_paths, self.dest_dir, stitch_out_ras_name, current_ref, pixel_type, mosaic_operator)
+                    self.mos_out_ras.append(stitch_out_ras_file)
                     masked_file_paths.extend(file_paths)
                 else:
                     if self.max_val_composite and not self.mosaic_operation:
-                        print('Processing cell statistics for..... {0}'.format(mos_out_ras_name))
-                        arcpy.gp.CellStatistics_sa(file_paths, mos_out_ras_file, "MAXIMUM", "DATA")
+                        stat_type = "MAXIMUM"
+                        ignore_nodata = True
+                        self._cell_statistics(file_paths, stitch_out_ras_file, stat_type, ignore_nodata)
         if masked_file_paths:
             return masked_file_paths
 
-    def _mosaic_to_new_raster_gp(self, file_paths, dest_dir, mos_out_ras_name, current_ref, pixel_type, mosaic_operator):
-        """ Mosaic to new operator geoprocessor """
-        print('Mosaic raster..... {0}'.format(mos_out_ras_name))
-        arcpy.MosaicToNewRaster_management(file_paths, dest_dir, mos_out_ras_name, current_ref, pixel_type, '', '1', mosaic_operator, 'FIRST')
+    def _mosaic_to_new_raster(self, file_paths, dest_dir, stitch_out_ras_name, current_ref, pixel_type, mosaic_operator):
+        """ Perform mosaicking """
+        print('Mosaic raster..... {0}'.format(stitch_out_ras_name))
+        arcpy.MosaicToNewRaster_management(file_paths, dest_dir, stitch_out_ras_name, current_ref, pixel_type, '', '1', mosaic_operator, 'FIRST')
 
-    def _get_file_to_stitch(self, init_file_name):
+    def _cell_statistics(self, file_paths, stat_out_ras_file, stat_type, ignore_nodata):
+        """ Perform cell statistics """
+        print('Processing cell statistics for..... {0}'.format(stat_out_ras_file))
+        if ignore_nodata:
+            ignore_nodata = 'DATA'
+        else:
+            ignore_nodata = ''
+        arcpy.gp.CellStatistics_sa(file_paths, stat_out_ras_file, stat_type, ignore_nodata)
+
+    def _get_stitch_files(self, init_file_name):
         """ Get files to be stitched and to calculate maximum values from """
         file_paths = []
         root_dir = get_directory(self.src, self.dir_startswith)
@@ -131,7 +141,7 @@ class NDVIProcessor:
             if file_name == init_file_name:
                 masked_out_ras = file_path
                 if self.mosaic_operation:
-                    masked_out_ras = self._init_mosaic_geoprocess(source_dir, file_name)
+                    masked_out_ras = self._preprocess_stitch_raster(source_dir, file_name)
                 elif self.max_val_composite and not self.mosaic_operation:
                     file_name_date_id = file_name_date[:4]
                 file_paths.append(masked_out_ras)
@@ -142,7 +152,7 @@ class NDVIProcessor:
                 if file_name_date == init_file_name_date:
                     masked_out_ras = os.path.join(source_dir, file_name).replace('\\', '/')
                     if self.mosaic_operation:
-                        masked_out_ras = self._init_mosaic_geoprocess(source_dir, file_name)
+                        masked_out_ras = self._preprocess_stitch_raster(source_dir, file_name)
                     file_paths.append(masked_out_ras)
                 elif file_name_date[:4] == init_file_name_date[:4]:
                     if self.max_val_composite and not self.mosaic_operation:
@@ -150,7 +160,7 @@ class NDVIProcessor:
                         file_paths.append(masked_out_ras)
         yield file_paths
 
-    def _init_mosaic_geoprocess(self, source_dir, file_name):
+    def _preprocess_stitch_raster(self, source_dir, file_name):
         """ Project and remove bad/background raster values - set to null """
         proj_out_ras = ""
         where_clause_val1 = "VALUE = 0"
