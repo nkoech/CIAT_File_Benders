@@ -56,15 +56,20 @@ class NDVIProcessor:
                     self.geoprocess_raster(mos_file_path)
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
-    def validate_raster(self):
-        """ First check for  invalid/corrupted raster data """
+    def validate_data(self):
+        """ First check for  invalid/corrupted data """
         root_dir = get_directory(self.src, self.dir_startswith)
         for file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
             self._get_spatial_ref(file_path)
             print('Validated..... {0}'.format(file_name))
+        try:
+            if len(self.place_name) != 3:
+                raise ValueError('Input value "{0}" should be made of three characters'.format(self.place_name))
+        except ValueError as e:
+            print(e)
 
     def _combine_rasters(self, file_path, file_name_date):
-        """ Get rasters to stitch, calculate 'Maximum Cell Statistics' stitch them together """
+        """ Get rasters to stitch, calculate 'Maximum Cell Statistics'"""
         masked_file_paths = ""
         if self.max_val_composite and not self.mosaic_operation:
             file_name_date = file_name_date[:4]
@@ -265,7 +270,7 @@ def main():
     first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'target_reference', 'aoi_geometry', 'aoi_name', 'mosaic', 'max_composite']
     second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'target_ref', 'aoi_poly', 'aoi_place_name', 'mosaic_operation', 'max_value_composite']
     read_file = NDVIProcessor(first_level_key, second_level_key)
-    read_file.validate_raster()
+    read_file.validate_data()
     read_file.init_geoprocess_raster()
 
 if __name__ == '__main__':
