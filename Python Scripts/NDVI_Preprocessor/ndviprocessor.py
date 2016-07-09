@@ -45,9 +45,9 @@ class NDVIProcessor:
             if not os.path.exists(self.dest_dir):
                 os.makedirs(self.dest_dir)
             if self.mosaic_operation:
-                self._mosaic_mvc_rasters(file_path, file_name_date)
+                self._combine_rasters(file_path, file_name_date)
             elif self.max_val_composite and not self.mosaic_operation:
-                self._mosaic_mvc_rasters(file_path, file_name_date)
+                self._combine_rasters(file_path, file_name_date)
             else:
                 self.geoprocess_raster(file_path)
         if self.mosaic_operation:
@@ -63,7 +63,7 @@ class NDVIProcessor:
             self._get_spatial_ref(file_path)
             print('Validated..... {0}'.format(file_name))
 
-    def _mosaic_mvc_rasters(self, file_path, file_name_date):
+    def _combine_rasters(self, file_path, file_name_date):
         """ Get rasters to stitch, calculate 'Maximum Cell Statistics' stitch them together """
         masked_file_paths = ""
         if self.max_val_composite and not self.mosaic_operation:
