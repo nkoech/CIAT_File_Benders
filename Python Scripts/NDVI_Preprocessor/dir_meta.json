@@ -6,17 +6,17 @@
 	],
 	"dest":[
 		{
-			"dest_dir":"C:/Data/Maximum_Values/Test"
+			"dest_dir":"C:/Data/Kenya/NDVI/Test"
 		}
 	],
 	"dir_startswith":[
 		{
-			"dir_param":"Maxim"
+			"dir_param":"NDV"
 		}
 	],
 	"file_startswith":[
 		{
-			"file_start":"KEN."
+			"file_start":"africa_"
 		}
 	],
 	"file_endswith":[
@@ -31,7 +31,7 @@
 	],
 	"aoi_geometry":[
 		{
-			"aoi_poly":"D:/Data/Data/GIZ_IASS_CIAT/Administrative/KEN_Ilemi_Admin_0.shp"
+			"aoi_poly":"D:/Data/Data/KEN_Admin/KEN_Ilemi_Admin_Buffer.shp"
 		}
 	],
 	"aoi_name":[
@@ -41,7 +41,7 @@
 	],
 	"mosaic":[
 		{
-			"mosaic_operation":false
+			"mosaic_operation":true
 		}
 	],
 	"max_composite":[

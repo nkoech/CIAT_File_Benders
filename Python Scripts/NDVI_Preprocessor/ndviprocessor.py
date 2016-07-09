@@ -101,11 +101,10 @@ class NDVIProcessor:
         """ Stitch several rasters together, calculate maximum value statistics """
         masked_file_paths = []
         file_name_id = ntpath.basename(file_path)
-        stitch_out_ras_name = 'MOSK_' + file_name_id[:11] + file_name_id[-53:]
-        if self.max_val_composite and not self.mosaic_operation:
-            stitch_out_ras_name = 'MVC.' + file_name_id[:8] + file_name_id[-45:]
+        stitch_out_ras_name = self._set_stitch_output(file_name_id)
         stitch_out_ras_file = self.dest_dir + '/' + stitch_out_ras_name
 
+        # Perform mosaic and cell statistics
         for file_paths in self._get_stitch_files(file_name_id):
             if file_paths:
                 current_ref, target_ref_name = self._get_spatial_ref(file_paths[0], self.target_ref)
@@ -122,6 +121,25 @@ class NDVIProcessor:
                         self._cell_statistics(file_paths, stitch_out_ras_file, stat_type, ignore_nodata)
         if masked_file_paths:
             return masked_file_paths
+
+    def _set_stitch_output(self, file_name_id):
+        """ Sets stitch and MVC output location and name """
+        stitch_out_ras_name = 'MOSK_' + file_name_id[:11] + file_name_id[-53:]
+        mvc_output_dir = "MVC_Output"
+        mvc_dest_dir = self.dest_dir + "/" + mvc_output_dir
+
+        # Create directory to store MVC output raster
+        if self.max_val_composite and self.mosaic_operation:
+            if not os.path.exists(mvc_dest_dir):
+                os.makedirs(mvc_dest_dir)
+
+        # Set MVC output file name
+        if self.max_val_composite and not self.mosaic_operation:
+            if os.path.exists(mvc_dest_dir):
+                stitch_out_ras_name = mvc_output_dir + '/MVC.' + file_name_id[:8] + file_name_id[-45:]
+            else:
+                stitch_out_ras_name = 'MVC.' + file_name_id[:8] + file_name_id[-45:]
+        return stitch_out_ras_name
 
     def _mosaic_to_new_raster(self, file_paths, dest_dir, stitch_out_ras_name, current_ref, pixel_type, mosaic_operator):
         """ Perform mosaicking """
