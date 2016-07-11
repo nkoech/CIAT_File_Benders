@@ -85,7 +85,7 @@ class NDVIProcessor:
 
     def _init_stitch_rasters(self, file_path, file_name_date):
         """ Get rasters to stitch, calculate 'Maximum Cell Statistics'"""
-        masked_file_paths = ""
+        masked_file_paths = None
         if self.max_val_composite and not self.mosaic_operation:
             file_name_date = file_name_date[:4]
         try:
@@ -194,7 +194,7 @@ class NDVIProcessor:
 
     def _preprocess_stitch_raster(self, source_dir, file_name):
         """ Project and remove bad/background raster values - set to null """
-        proj_out_ras = ""
+        proj_out_ras = None
         where_clause_val1 = "VALUE = 0"
         file_path = os.path.join(source_dir, file_name).replace('\\', '/')
         current_ref, target_ref_name = self._get_spatial_ref(file_path, self.target_ref)
