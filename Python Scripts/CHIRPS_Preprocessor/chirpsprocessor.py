@@ -4,9 +4,9 @@ __email__ = "koechnicholas@gmail.com"
 __status__ = "draft"
 
 
-import os
 import arcpy
 import ntpath
+import os
 from arcpy.sa import *
 from arcpy import env
 from readjson import get_json_data
@@ -156,7 +156,6 @@ def main():
     first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'aoi_geometry', 'aoi_name', 'extract_file', 'cal_mean', 'no_data']
     second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'aoi_poly', 'aoi_place_name', 'unzip_file', 'ras_mean', 'no_data_value']
     read_file = CHIRPSProcessor(first_level_key, second_level_key)
-    #read_file.validate_data()
     read_file.init_geoprocess_raster()
 
 if __name__ == '__main__':
