@@ -5,14 +5,14 @@ __status__ = "draft"
 
 
 import arcpy
+from arcpy import env
+from arcpy.sa import *
+from extractdata import extract_data
+from filelocation import get_file_location
 import ntpath
 import os
-from arcpy.sa import *
-from arcpy import env
 from readjson import get_json_data
 from sourcedirectory import get_directory
-from filelocation import get_file_location
-from extractdata import extract_data
 
 
 class CHIRPSProcessor:
