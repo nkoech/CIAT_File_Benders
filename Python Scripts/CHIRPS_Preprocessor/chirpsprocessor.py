@@ -51,6 +51,9 @@ class CHIRPSProcessor:
         if not os.path.exists(self.dest_dir):
             os.makedirs(self.dest_dir)  # Create destination folder
 
+        if not int(self.no_data_val):
+            self.no_data_val = ''  # Assign NoData value to none
+
         if self.cal_mean:
             self._calculate_mean_raster()  # Calculate mean  raster
             self._clip_raster(self.no_data_val)  # Clip raster
