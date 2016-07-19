@@ -16,8 +16,6 @@ def get_file_path(file_startswith, file_endswith):
             if file_name.startswith(file_startswith) & file_name.endswith(file_endswith):
                 file_path = os.path.join(cwd, file_name).replace('\\', '/')
                 return file_path
-            else:
-                raise ValueError('Settings in JSON file are missing')
     except ValueError as e:
         print(e)
 

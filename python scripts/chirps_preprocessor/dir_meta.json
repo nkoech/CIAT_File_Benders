@@ -1,32 +1,27 @@
 {
 	"src":[
 		{
-			"src_dir":"C:/Data"
+			"src_dir":"C:/Data/CHIRPS"
 		}
 	],
 	"dest":[
 		{
-			"dest_dir":"C:/Data/Kenya/NDVI/Test"
+			"dest_dir":"C:/Data/CHIRPS/Monthly/Output"
 		}
 	],
 	"dir_startswith":[
 		{
-			"dir_param":"NDV"
+			"dir_param":"Mont"
 		}
 	],
 	"file_startswith":[
 		{
-			"file_start":"africa_"
+			"file_start":"chirps-"
 		}
 	],
 	"file_endswith":[
 		{
-			"file_end":"_wm2.tif"
-		}
-	],
-	"target_reference":[
-		{
-			"target_ref":"GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433],METADATA['World',-180.0,-90.0,180.0,90.0,0.0,0.0174532925199433,0.0,1262]]"
+			"file_end":".tif.gz"
 		}
 	],
 	"aoi_geometry":[
@@ -39,14 +34,19 @@
 			"aoi_place_name":"KEN"
 		}
 	],
-	"mosaic":[
+	"extract_file":[
 		{
-			"mosaic_operation":true
+			"unzip_file":true
 		}
 	],
-	"max_composite":[
+	"cal_mean":[
 		{
-			"max_value_composite":true
+			"ras_mean":true
+		}
+	],
+	"no_data":[
+		{
+			"no_data_value":"-9999"
 		}
 	]
 }

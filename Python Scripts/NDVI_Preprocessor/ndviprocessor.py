@@ -47,7 +47,6 @@ class NDVIProcessor:
         """ Initialize raster geoprocessing """
         root_dir = get_directory(self.src, self.dir_startswith)
         for source_dir, file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
-            file_name = ntpath.basename(file_path)
             file_name_date = file_name.split('.')[1]
             if not os.path.exists(self.dest_dir):
                 os.makedirs(self.dest_dir)
