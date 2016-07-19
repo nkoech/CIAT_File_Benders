@@ -4,12 +4,12 @@ __email__ = "koechnicholas@gmail.com"
 __status__ = "draft"
 
 
-import os
 import arcpy
 from arcpy import env
 from arcpy.sa import *
 from filelocation import get_file_location
 import ntpath
+import os
 from readjson import get_json_data
 from sourcedirectory import get_directory
 
