@@ -6,12 +6,12 @@ __status__ = "draft"
 
 import os
 import arcpy
-import ntpath
-from arcpy.sa import *
 from arcpy import env
+from arcpy.sa import *
+from filelocation import get_file_location
+import ntpath
 from readjson import get_json_data
 from sourcedirectory import get_directory
-from filelocation import get_file_location
 
 
 class NDVIProcessor:
