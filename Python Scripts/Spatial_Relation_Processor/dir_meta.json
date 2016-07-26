@@ -1,0 +1,45 @@
+{
+	"src_var_1":{
+
+		"src_1":[
+			{
+				"src_dir_1":"C:/Data"
+			},
+			{
+				"dir_startswith_1":"NDVI"
+			},
+			{
+				"file_startswith_1":"MVC.KEN."
+			},
+			{
+				"file_endswith_1":"_wm2.tif"
+			}
+		]
+	},
+	"src_var_2": {
+		"src_2": [
+			{
+				"src_dir_2": "C:/Data"
+			},
+			{
+				"dir_startswith_2": "CHIRPS"
+			},
+			{
+				"file_startswith_2": "KEN_chirps-"
+			},
+			{
+				"file_endswith_2": ".tif"
+			}
+		]
+	},
+	"dest":[
+		{
+			"dest_dir":"C:/Data/Trend_Correlation"
+		}
+	],
+	"aoi_name":[
+		{
+			"aoi_place_name":"KEN"
+		}
+	]
+}
