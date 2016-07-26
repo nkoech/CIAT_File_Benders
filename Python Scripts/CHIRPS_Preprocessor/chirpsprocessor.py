@@ -16,9 +16,7 @@ from sourcedirectory import get_directory
 
 
 class CHIRPSProcessor:
-    def __init__(self, first_level_key, second_level_key):
-        self.first_level_key = first_level_key
-        self.second_level_key = second_level_key
+    def __init__(self):
         self.tool_settings = self._get_user_parameters()
         self.src = self.tool_settings['src_dir']
         self.dest_dir = self.tool_settings['dest_dir']
@@ -35,10 +33,15 @@ class CHIRPSProcessor:
         """Get contents from a Json file"""
         tool_settings = {}
         data = get_json_data('dir_meta', '.json')
-        for key_1, key_2 in zip(self.first_level_key, self.second_level_key):
-            for key in data[key_1]:
-                value = key[key_2]
-                tool_settings[key_2] = value
+        for i in data:
+            for j in data[i]:
+                if isinstance(j, dict):
+                    key = j.keys()[0]
+                    tool_settings[key] = j[key]
+                else:
+                    for k in data[i][j]:
+                        key = k.keys()[0]
+                        tool_settings[key] = k[key]
         return tool_settings
 
     def init_geoprocess_raster(self):
@@ -156,9 +159,7 @@ def main():
     """Main program"""
     env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
-    first_level_key = ['src', 'dest', 'dir_startswith', 'file_startswith', 'file_endswith', 'aoi_geometry', 'aoi_name', 'extract_file', 'cal_mean', 'no_data']
-    second_level_key = ['src_dir', 'dest_dir', 'dir_param', 'file_start', 'file_end', 'aoi_poly', 'aoi_place_name', 'unzip_file', 'ras_mean', 'no_data_value']
-    read_file = CHIRPSProcessor(first_level_key, second_level_key)
+    read_file = CHIRPSProcessor()
     read_file.init_geoprocess_raster()
 
 if __name__ == '__main__':
