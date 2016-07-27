@@ -10,17 +10,20 @@ from arcpy.sa import *
 from filelocation import get_file_location
 import ntpath
 import os
+import re
 from readjson import get_json_data
 from sourcedirectory import get_directory
-import traceback
 import sys
+import traceback
 
 
 class TrendCorrelation:
     def __init__(self):
         self.tool_settings = self._get_user_parameters()
-        self.data_var = ['var_1', 'var_2']
         self.src_var_1 = self.tool_settings['src_dir_1']
+        self.data_name_1 = self.tool_settings['satellite_type_1']
+        self.data_name_2 = self.tool_settings['satellite_type_2']
+        self.data_var = [self.data_name_1, self.data_name_2]
         self.dir_startswith_var_1 = self.tool_settings['dir_startswith_1']
         self.file_startswith_var_1 = self.tool_settings['file_startswith_1']
         self.file_endswith_var_1 = self.tool_settings['file_endswith_1']
@@ -30,6 +33,8 @@ class TrendCorrelation:
         self.file_endswith_var_2 = self.tool_settings['file_endswith_2']
         self.dest_dir = self.tool_settings['dest_dir']
         self.place_name = self.tool_settings['aoi_place_name']
+        self.res_fine = self.tool_settings['resample_fine']
+        self.res_method = self.tool_settings['resample_method']
 
     def _get_user_parameters(self):
         """Get contents from a Json file"""
@@ -43,18 +48,30 @@ class TrendCorrelation:
 
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
-        cell_size = self.validate_data()  # Validated raster
+        cell_size, data_years_1, data_years_2 = self.validate_data()  # Validated raster
 
-        # if not os.path.exists(self.dest_dir):
-        #     os.makedirs(self.dest_dir)  # Create destination folder
+        if len(cell_size) > 1:
+            self._resample_raster(cell_size)  # Modify raster resolution
+
+        if not os.path.exists(self.dest_dir):
+            os.makedirs(self.dest_dir)  # Create destination folder
+
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def validate_data(self):
         """ Check for  invalid/corrupted data """
         prev_file_path = ''
         ras_resolution = []
-        for root_dir, file_startswith, file_endswith in self._get_source_parameters(self.data_var):
+        data_years_1 = []
+        data_years_2 = []
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
             for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
+                if data_id == self.data_name_1:
+                    data_year = self._validate_file_name(file_name)  # Check file naming convention
+                    data_years_1.append(data_year)
+                elif data_id == self.data_name_2:
+                    data_year = self._validate_file_name(file_name)
+                    data_years_2.append(data_year)
                 self._validate_spatial_ref(file_path, prev_file_path)
                 print('Validated..... {0}'.format(file_name))
                 cell_size = self._get_raster_resolution(file_path, ras_resolution)  # Get raster resolution
@@ -62,21 +79,18 @@ class TrendCorrelation:
                     ras_resolution.append(cell_size)
                 prev_file_path = file_path
         self._validated_place_name()  # validated area of interest name as three letter acronym
-        return ras_resolution
+        return ras_resolution, data_years_1, data_years_2
 
-    def _get_source_parameters(self, data_var):
-        """ Get files root directory """
-        for i in data_var:
-            if i == 'var_1':
-                root_dir = get_directory(self.src_var_1, self.dir_startswith_var_1)
-                file_startswith = self.file_startswith_var_1
-                file_endswith = self.file_endswith_var_1
-                yield root_dir, file_startswith, file_endswith
+    def _validate_file_name(self, file_name):
+        """ Validate file name and return year """
+        regex = re.findall(r'([1-3][0-9]{3})', file_name)
+        try:
+            if regex:
+                return regex[0]
             else:
-                root_dir = get_directory(self.src_var_2, self.dir_startswith_var_2)
-                file_startswith = self.file_startswith_var_2
-                file_endswith = self.file_endswith_var_2
-                yield root_dir, file_startswith, file_endswith
+                raise ValueError('{} has a bad naming convention. Make sure the file name has year in the format "yyyy"'.format(file_name))
+        except ValueError as e:
+            sys.exit(e)
 
     def _validate_spatial_ref(self, file_path, prev_file_path):
         """ Get raster spatial reference """
@@ -117,9 +131,65 @@ class TrendCorrelation:
         except ValueError as e:
             print(e)
 
+    def _resample_raster(self, cell_size):
+        """ Modify raster resolution """
+        new_file_startwith = "RES_"
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
+                fine_cell_size = min(cell_size)
+                coarse_cell_size = max(cell_size)
+                in_cell_size = self._get_cell_width(file_path)
+                if self.res_fine:
+                    if in_cell_size != fine_cell_size:
+                        self._resample_processor(file_path, fine_cell_size, new_file_startwith)  # Resample geoprocessor
+                        self._update_file_startwith(file_startswith, new_file_startwith)
+                else:
+                    if in_cell_size != coarse_cell_size:
+                        self._resample_processor(file_path, coarse_cell_size, new_file_startwith)
+                        self._update_file_startwith(file_startswith, new_file_startwith)
+
     def _get_cell_width(self, file_path):
         """ Get raster cell size """
         return arcpy.Describe(file_path).meanCellWidth
+
+    def _resample_processor(self, file_path, cell_size, file_start_char):
+        """ Resample image to coarse or fine cell size """
+        in_ras = ntpath.basename(file_path)
+        out_ras_name = file_start_char + in_ras
+        out_ras_dir = ntpath.dirname(file_path)
+        out_res_ras = os.path.join(out_ras_dir, out_ras_name).replace('\\', '/')
+        print('Resampling..... {}'.format(in_ras))
+        arcpy.Resample_management(file_path, out_res_ras, cell_size, self.res_method)
+
+    def _update_file_startwith(self, file_startswith, new_file_startwith):
+        """ Update file startswith variable """
+        if file_startswith == self.file_startswith_var_1:
+            self.file_startswith_var_1 = new_file_startwith + file_startswith
+        elif file_startswith == self.file_startswith_var_2:
+            self.file_startswith_var_2 = new_file_startwith + file_startswith
+
+    def _get_source_parameters(self, data_var):
+        """ Get files root directory """
+        try:
+            if len(set(data_var)) > 1:
+                for i in data_var:
+                    if i == self.data_name_1:
+                        root_dir, file_startswith, file_endswith = self._set_source_parameters(self.src_var_1, self.dir_startswith_var_1, self.file_startswith_var_1, self.file_endswith_var_1)
+                        yield root_dir, file_startswith, file_endswith, i
+                    elif i == self.data_name_2:
+                        root_dir, file_startswith, file_endswith = self._set_source_parameters(self.src_var_2, self.dir_startswith_var_2, self.file_startswith_var_2, self.file_endswith_var_2)
+                        yield root_dir, file_startswith, file_endswith, i
+            else:
+                raise ValueError('Processing ABORTED! Satellite type settings should not be similar. Please change your settings'.format(self.data_name_1, self.data_name_2))
+        except ValueError as e:
+            sys.exit(e)
+
+    def _set_source_parameters(self, src_var, dir_startswith_var, file_startswith_var, file_endswith_var):
+        """ Set file source parameters """
+        root_dir = get_directory(src_var, dir_startswith_var)
+        file_startswith = file_startswith_var
+        file_endswith = file_endswith_var
+        return root_dir, file_startswith, file_endswith
 
     def _delete_raster_file(self, in_file):
         """ Delete extracted file """

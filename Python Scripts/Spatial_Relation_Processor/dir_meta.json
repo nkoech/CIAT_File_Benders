@@ -2,6 +2,7 @@
   "src_1": [
     {
       "src_dir_1": "C:/Data",
+      "satellite_type_1": "NDVI",
       "dir_startswith_1": "NDVI",
       "file_startswith_1": "MVC.KEN.",
       "file_endswith_1": "_wm2.tif"
@@ -10,6 +11,7 @@
   "src_2": [
     {
       "src_dir_2": "C:/Data",
+      "satellite_type_2": "CHIRPS",
       "dir_startswith_2": "CHIRPS",
       "file_startswith_2": "KEN_chirps-",
       "file_endswith_2": ".tif"
@@ -23,8 +25,8 @@
   "file_settings": [
     {
       "aoi_place_name": "KEN",
-      "res_method": "NEAREST",
-      "res_fine": true
+      "resample_method": "NEAREST",
+      "resample_fine": false
     }
   ]
 }
