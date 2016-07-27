@@ -56,6 +56,8 @@ class TrendCorrelation:
         if not os.path.exists(self.dest_dir):
             os.makedirs(self.dest_dir)  # Create destination folder
 
+        self._calculate_mean_raster()  # Calculate average raster
+
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def validate_data(self):
@@ -167,6 +169,39 @@ class TrendCorrelation:
             self.file_startswith_var_1 = new_file_startwith + file_startswith
         elif file_startswith == self.file_startswith_var_2:
             self.file_startswith_var_2 = new_file_startwith + file_startswith
+
+    def _calculate_mean_raster(self):
+        """ Calculate mean raster """
+        stat_type = 'MEAN'
+        ignore_nodata = True
+        ras_file_list = self._get_mean_rasters()
+        if ras_file_list:
+            for ras_files in ras_file_list:
+                if ras_files:
+                    out_ras_name = 'MEAN_' + ntpath.basename(ras_files[0])
+                    out_ras_dir = ntpath.dirname(ras_files[0])
+                    out_mean_ras = os.path.join(out_ras_dir, out_ras_name).replace('\\', '/')
+                    self._cell_statistics(ras_files, out_mean_ras, stat_type, ignore_nodata)
+                    # self._delete_raster_file(ras_files)
+
+    def _get_mean_rasters(self):
+        """ Get rasters for mean calculation """
+        outer_ras_list = []
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            inner_ras_list = []
+            for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
+                    inner_ras_list.append(file_path)
+            outer_ras_list.append(inner_ras_list)
+        return outer_ras_list
+
+    def _cell_statistics(self, ras_files, out_mean_ras, stat_type, ignore_nodata):
+        """ Perform cell statistics """
+        print('Processing cell statistics for..... {0}'.format(out_mean_ras))
+        if ignore_nodata:
+            ignore_nodata = 'DATA'
+        else:
+            ignore_nodata = ''
+        arcpy.gp.CellStatistics_sa(ras_files, out_mean_ras, stat_type, ignore_nodata)
 
     def _get_source_parameters(self, data_var):
         """ Get files root directory """
