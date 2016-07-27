@@ -25,8 +25,8 @@ class NDVIProcessor:
         self.file_startswith = self.tool_settings['file_start']
         self.file_endswith = self.tool_settings['file_end']
         self.dest_dir = self.tool_settings['dest_dir']
-        self.target_ref = self.tool_settings['target_ref']
-        self.clip_poly = self.tool_settings['aoi_poly']
+        self.target_ref = self.tool_settings['reproject_to']
+        self.clip_poly = self.tool_settings['aoi_boundary']
         self.place_name = self.tool_settings['aoi_place_name']
         self.mosaic_operation = self.tool_settings['mosaic_operation']
         self.max_val_composite = self.tool_settings['max_value_composite']
@@ -38,12 +38,7 @@ class NDVIProcessor:
         for i in data:
             for j in data[i]:
                 if isinstance(j, dict):
-                    key = j.keys()[0]
-                    tool_settings[key] = j[key]
-                else:
-                    for k in data[i][j]:
-                        key = k.keys()[0]
-                        tool_settings[key] = k[key]
+                    tool_settings.update(j)
         return tool_settings
 
     def init_geoprocess_raster(self):

@@ -26,7 +26,7 @@ class CHIRPSProcessor:
         self.clip_poly = self.tool_settings['aoi_poly']
         self.place_name = self.tool_settings['aoi_place_name']
         self.extract_file = self.tool_settings['unzip_file']
-        self.cal_mean = self.tool_settings['ras_mean']
+        self.cal_mean = self.tool_settings['cal_mean']
         self.no_data_val = self.tool_settings['no_data_value']
 
     def _get_user_parameters(self):
@@ -36,12 +36,7 @@ class CHIRPSProcessor:
         for i in data:
             for j in data[i]:
                 if isinstance(j, dict):
-                    key = j.keys()[0]
-                    tool_settings[key] = j[key]
-                else:
-                    for k in data[i][j]:
-                        key = k.keys()[0]
-                        tool_settings[key] = k[key]
+                    tool_settings.update(j)
         return tool_settings
 
     def init_geoprocess_raster(self):

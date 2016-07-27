@@ -1,52 +1,28 @@
 {
-	"src":[
-		{
-			"src_dir":"C:/Data"
-		}
-	],
-	"dest":[
-		{
-			"dest_dir":"C:/Data/Kenya/NDVI/Test"
-		}
-	],
-	"dir_startswith":[
-		{
-			"dir_param":"NDV"
-		}
-	],
-	"file_startswith":[
-		{
-			"file_start":"africa_"
-		}
-	],
-	"file_endswith":[
-		{
-			"file_end":"_wm2.tif"
-		}
-	],
-	"target_reference":[
-		{
-			"target_ref":"GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433],METADATA['World',-180.0,-90.0,180.0,90.0,0.0,0.0174532925199433,0.0,1262]]"
-		}
-	],
-	"aoi_geometry":[
-		{
-			"aoi_poly":"D:/Data/Data/KEN_Admin/KEN_Ilemi_Admin_Buffer.shp"
-		}
-	],
-	"aoi_name":[
-		{
-			"aoi_place_name":"KEN"
-		}
-	],
-	"mosaic":[
-		{
-			"mosaic_operation":true
-		}
-	],
-	"max_composite":[
-		{
-			"max_value_composite":true
-		}
-	]
+  "src": [
+    {
+      "src_dir": "C:/Data",
+      "dir_param": "NDV",
+      "file_start": "africa_",
+      "file_end": "_wm2.tif"
+    }
+  ],
+  "dest": [
+    {
+      "dest_dir": "C:/Data/Kenya/NDVI/Test"
+    }
+  ],
+  "target_reference": [
+    {
+      "aoi_boundary": "D:/Data/Data/KEN_Admin/KEN_Ilemi_Admin_Buffer.shp",
+      "aoi_place_name": "KEN",
+      "reproject_to": "GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433],METADATA['World',-180.0,-90.0,180.0,90.0,0.0,0.0174532925199433,0.0,1262]]"
+    }
+  ],
+  "mosaic_details": [
+    {
+      "mosaic_operation": true,
+      "max_value_composite": true
+    }
+  ]
 }

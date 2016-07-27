@@ -38,18 +38,12 @@ class TrendCorrelation:
         for i in data:
             for j in data[i]:
                 if isinstance(j, dict):
-                    key = j.keys()[0]
-                    tool_settings[key] = j[key]
-                else:
-                    for k in data[i][j]:
-                        key = k.keys()[0]
-                        tool_settings[key] = k[key]
+                    tool_settings.update(j)
         return tool_settings
 
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
         cell_size = self.validate_data()  # Validated raster
-        #print(cell_size)
 
         # if not os.path.exists(self.dest_dir):
         #     os.makedirs(self.dest_dir)  # Create destination folder
