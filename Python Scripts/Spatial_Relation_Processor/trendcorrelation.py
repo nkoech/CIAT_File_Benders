@@ -140,7 +140,7 @@ class TrendCorrelation:
             for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
                 fine_cell_size = min(cell_size)
                 coarse_cell_size = max(cell_size)
-                in_cell_size = self._get_cell_width(file_path)
+                in_cell_size = self._get_cell_width(file_path)  # For current file
                 if self.res_fine:
                     if in_cell_size != fine_cell_size:
                         self._resample_processor(file_path, fine_cell_size, new_file_startwith)  # Resample geoprocessor
@@ -182,7 +182,6 @@ class TrendCorrelation:
                     out_ras_dir = ntpath.dirname(ras_files[0])
                     out_mean_ras = os.path.join(out_ras_dir, out_ras_name).replace('\\', '/')
                     self._cell_statistics(ras_files, out_mean_ras, stat_type, ignore_nodata)
-                    # self._delete_raster_file(ras_files)
 
     def _get_mean_rasters(self):
         """ Get rasters for mean calculation """
@@ -226,10 +225,10 @@ class TrendCorrelation:
         file_endswith = file_endswith_var
         return root_dir, file_startswith, file_endswith
 
-    def _delete_raster_file(self, in_file):
+    def _delete_raster_file(self, del_file):
         """ Delete extracted file """
-        for extracted_file in in_file:
-            arcpy.Delete_management(extracted_file)
+        for f in del_file:
+            arcpy.Delete_management(f)
 
 
 def main():
