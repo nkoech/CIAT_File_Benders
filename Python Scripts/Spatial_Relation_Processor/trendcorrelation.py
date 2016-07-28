@@ -48,7 +48,8 @@ class TrendCorrelation:
 
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
-        cell_size, data_years_1, data_years_2 = self.validate_data()  # Validated raster
+        cell_size, data_years = self._validate_data()  # Validated raster
+        print("Data Years ", data_years)
 
         if len(cell_size) > 1:
             self._resample_raster(cell_size)  # Modify raster resolution
@@ -60,28 +61,27 @@ class TrendCorrelation:
 
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
-    def validate_data(self):
+    def _validate_data(self):
         """ Check for  invalid/corrupted data """
         prev_file_path = ''
         ras_resolution = []
-        data_years_1 = []
-        data_years_2 = []
+        data_years = {}
+        data_years_pair = []
         for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
             for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
-                if data_id == self.data_name_1:
-                    data_year = self._validate_file_name(file_name)  # Check file naming convention
-                    data_years_1.append(data_year)
-                elif data_id == self.data_name_2:
-                    data_year = self._validate_file_name(file_name)
-                    data_years_2.append(data_year)
-                self._validate_spatial_ref(file_path, prev_file_path)
+                year = self._validate_file_name(file_name)  # Check file naming convention and return year
+                if year:
+                    data_years_pair.append(year)
+                self._validate_spatial_ref(file_path, prev_file_path)  # Validate spatial reference
                 print('Validated..... {0}'.format(file_name))
                 cell_size = self._get_raster_resolution(file_path, ras_resolution)  # Get raster resolution
                 if cell_size:
                     ras_resolution.append(cell_size)
-                prev_file_path = file_path
-        self._validated_place_name()  # validated area of interest name as three letter acronym
-        return ras_resolution, data_years_1, data_years_2
+                prev_file_path = file_path  # For spatial reference validation
+            data_years[data_id] = data_years_pair
+
+        self._validated_place_name()  # Validated area of interest name as three letter acronym
+        return ras_resolution, data_years
 
     def _validate_file_name(self, file_name):
         """ Validate file name and return year """
@@ -215,7 +215,7 @@ class TrendCorrelation:
                         root_dir, file_startswith, file_endswith = self._set_source_parameters(self.src_var_2, self.dir_startswith_var_2, self.file_startswith_var_2, self.file_endswith_var_2)
                         yield root_dir, file_startswith, file_endswith, i
             else:
-                raise ValueError('Processing ABORTED! Satellite type settings should not be similar. Please change your settings'.format(self.data_name_1, self.data_name_2))
+                raise ValueError('Processing ABORTED! Satellite type settings should not be similar or empty. Please change your settings'.format(self.data_name_1, self.data_name_2))
         except ValueError as e:
             sys.exit(e)
 
