@@ -21,8 +21,8 @@ class TrendCorrelation:
     def __init__(self):
         self.tool_settings = self._get_user_parameters()
         self.src_var_1 = self.tool_settings['src_dir_1']
-        self.data_name_1 = self.tool_settings['satellite_type_1']
-        self.data_name_2 = self.tool_settings['satellite_type_2']
+        self.data_name_1 = self.tool_settings['datatype_in_filename_1']
+        self.data_name_2 = self.tool_settings['datatype_in_filename_2']
         self.data_var = [self.data_name_1, self.data_name_2]
         self.dir_startswith_var_1 = self.tool_settings['dir_startswith_1']
         self.file_startswith_var_1 = self.tool_settings['file_startswith_1']
@@ -49,7 +49,6 @@ class TrendCorrelation:
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
         cell_size, data_years = self._validate_data()  # Validated raster
-        print("Data Years ", data_years)
 
         if len(cell_size) > 1:
             self._resample_raster(cell_size)  # Modify raster resolution
@@ -58,6 +57,7 @@ class TrendCorrelation:
             os.makedirs(self.dest_dir)  # Create destination folder
 
         self._calculate_mean_raster()  # Calculate average raster
+        self._calculate_sxy()
 
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
@@ -69,7 +69,7 @@ class TrendCorrelation:
         data_years_pair = []
         for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
             for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
-                year = self._validate_file_name(file_name)  # Check file naming convention and return year
+                year = self._validate_file_name(file_name, data_id)  # Check file naming convention and return year
                 if year:
                     data_years_pair.append(year)
                 self._validate_spatial_ref(file_path, prev_file_path)  # Validate spatial reference
@@ -83,12 +83,31 @@ class TrendCorrelation:
         self._validated_place_name()  # Validated area of interest name as three letter acronym
         return ras_resolution, data_years
 
-    def _validate_file_name(self, file_name):
+    def _validate_file_name(self, file_name, data_id):
         """ Validate file name and return year """
-        regex = re.findall(r'([1-3][0-9]{3})', file_name)
+        self._validate_data_type(data_id, file_name)  # Validate data type name as set by the user
+        data_year = self._validate_data_year(file_name)  # Validate file name and return year
+        return data_year
+
+    def _validate_data_type(self, data_id, file_name):
+        """ Validate data type name as set by user """
+        regex_pattern = r'[^a-zA-Z\d:]' + re.escape(data_id) + r'[^a-zA-Z\d:]'
+        match = re.search(regex_pattern, file_name, re.I)
         try:
-            if regex:
-                return regex[0]
+            if match:
+                return None
+            else:
+                raise ValueError('BAD USER SETTINGS!. "datatype_in_filename_n" should match the data type name recorded in the file name i.e. NDVI, CHIRPS, etc.'.format(data_id))
+        except ValueError as e:
+            sys.exit(e)
+
+    def _validate_data_year(self, file_name):
+        """  Validate file name and return the year """
+        regex = re.compile(r'([1-3][0-9]{3})')
+        match = regex.search(file_name)
+        try:
+            if match:
+                return match.group()
             else:
                 raise ValueError('{} has a bad naming convention. Make sure the file name has year in the format "yyyy"'.format(file_name))
         except ValueError as e:
@@ -174,7 +193,7 @@ class TrendCorrelation:
         """ Calculate mean raster """
         stat_type = 'MEAN'
         ignore_nodata = True
-        ras_file_list = self._get_mean_rasters()
+        ras_file_list = self._get_mean_calculation_rasters()
         if ras_file_list:
             for ras_files in ras_file_list:
                 if ras_files:
@@ -183,7 +202,7 @@ class TrendCorrelation:
                     out_mean_ras = os.path.join(out_ras_dir, out_ras_name).replace('\\', '/')
                     self._cell_statistics(ras_files, out_mean_ras, stat_type, ignore_nodata)
 
-    def _get_mean_rasters(self):
+    def _get_mean_calculation_rasters(self):
         """ Get rasters for mean calculation """
         outer_ras_list = []
         for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
@@ -201,6 +220,33 @@ class TrendCorrelation:
         else:
             ignore_nodata = ''
         arcpy.gp.CellStatistics_sa(ras_files, out_mean_ras, stat_type, ignore_nodata)
+
+    def _calculate_sxy(self):
+        """ Calculate sxy from; input raster, mean input raster, year and median year """
+        mean_rasters = self._get_all_mean_rasters()
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            mean_ras = self._get_mean_raster(mean_rasters, data_id)  # Get averaged raster for calculation
+            for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
+                print(mean_ras + '============' + file_name)
+
+    def _get_all_mean_rasters(self):
+        """ Get mean rasters to be used in sxy calculation """
+        mean_rasters = []
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            file_startswith = 'MEAN_'
+            for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
+                mean_rasters.append(file_path)
+        return mean_rasters
+
+    def _get_mean_raster(self, mean_rasters, data_id):
+        """ Identify appropriate average raster to be used in calculation """
+        if mean_rasters:
+            for ras_file in mean_rasters:
+                mean_file_name = ntpath.basename(ras_file)
+                match = re.search(data_id, mean_file_name, re.I)  # Wrong
+                if match:
+                    if match.group().lower() == data_id.lower():
+                        return ras_file
 
     def _get_source_parameters(self, data_var):
         """ Get files root directory """
