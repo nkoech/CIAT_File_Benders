@@ -9,6 +9,7 @@ from arcpy import env
 from arcpy.sa import *
 from filelocation import get_file_location
 import ntpath
+import numpy
 import os
 import re
 from readjson import get_json_data
@@ -57,7 +58,7 @@ class TrendCorrelation:
             os.makedirs(self.dest_dir)  # Create destination folder
 
         self._calculate_mean_raster()  # Calculate average raster
-        self._calculate_sxy()
+        sxy_out_rasters, raw_mean_ras_startwith = self._calculate_sxy(data_years)  # Calculate Sxy raster
 
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
@@ -66,8 +67,8 @@ class TrendCorrelation:
         prev_file_path = ''
         ras_resolution = []
         data_years = {}
-        data_years_pair = []
         for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            data_years_pair = []
             for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
                 year = self._validate_file_name(file_name, data_id)  # Check file naming convention and return year
                 if year:
@@ -78,7 +79,7 @@ class TrendCorrelation:
                 if cell_size:
                     ras_resolution.append(cell_size)
                 prev_file_path = file_path  # For spatial reference validation
-            data_years[data_id] = data_years_pair
+            data_years[str(data_id)] = data_years_pair
 
         self._validated_place_name()  # Validated area of interest name as three letter acronym
         return ras_resolution, data_years
@@ -98,18 +99,6 @@ class TrendCorrelation:
                 return None
             else:
                 raise ValueError('BAD USER SETTINGS!. "datatype_in_filename_n" should match the data type name recorded in the file name i.e. NDVI, CHIRPS, etc.'.format(data_id))
-        except ValueError as e:
-            sys.exit(e)
-
-    def _validate_data_year(self, file_name):
-        """  Validate file name and return the year """
-        regex = re.compile(r'([1-3][0-9]{3})')
-        match = regex.search(file_name)
-        try:
-            if match:
-                return match.group()
-            else:
-                raise ValueError('{} has a bad naming convention. Make sure the file name has year in the format "yyyy"'.format(file_name))
         except ValueError as e:
             sys.exit(e)
 
@@ -221,13 +210,41 @@ class TrendCorrelation:
             ignore_nodata = ''
         arcpy.gp.CellStatistics_sa(ras_files, out_mean_ras, stat_type, ignore_nodata)
 
-    def _calculate_sxy(self):
+    def _calculate_sxy(self, data_years):
         """ Calculate sxy from; input raster, mean input raster, year and median year """
+        sxy_out_rasters = {}
+        raw_mean_ras_startwith = 'MRAW_'
         mean_rasters = self._get_all_mean_rasters()
         for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            sxy_out_ras = ''
+            sxy_del_rasters = []
             mean_ras = self._get_mean_raster(mean_rasters, data_id)  # Get averaged raster for calculation
+            median_year = self._get_median_year(data_years, data_id)
             for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
-                print(mean_ras + '============' + file_name)
+                data_year = self._validate_data_year(file_name)  # Get raster year
+
+                out_raw_mean_ras = os.path.join(source_dir, raw_mean_ras_startwith + file_name).replace('\\', '/')
+                temp_raw_mean_ras = arcpy.Raster(file_path) - arcpy.Raster(mean_ras)
+                print('Saving..... {0}'.format(out_raw_mean_ras))
+                temp_raw_mean_ras.save(out_raw_mean_ras)
+
+                if sxy_out_ras:
+                    temp_out_ras = arcpy.Raster(sxy_out_ras) + ((data_year - median_year) * temp_raw_mean_ras)
+                    sxy_del_rasters.append(sxy_out_ras)  # Collect unwanted rasters to be deleted
+                    sxy_out_ras = os.path.join(source_dir, 'SXY_' + file_name).replace('\\', '/')
+                else:
+                    sxy_out_ras = os.path.join(source_dir, 'SXY_' + file_name).replace('\\', '/')
+                    temp_out_ras = (data_year - median_year) * temp_raw_mean_ras
+
+                print('Saving..... {0}'.format(sxy_out_ras))
+                temp_out_ras.save(sxy_out_ras)
+
+            sxy_out_rasters[str(data_id)] = str(sxy_out_ras)
+
+            self._delete_raster_file(mean_ras)  # Delete mean raster
+            self._delete_raster_file(sxy_del_rasters)  # Delete collected rasters
+
+        return sxy_out_rasters, raw_mean_ras_startwith
 
     def _get_all_mean_rasters(self):
         """ Get mean rasters to be used in sxy calculation """
@@ -247,6 +264,24 @@ class TrendCorrelation:
                 if match:
                     if match.group().lower() == data_id.lower():
                         return ras_file
+
+    def _get_median_year(self, data_years, data_id):
+        """ Calculate median year from list """
+        for k, v in data_years.items():
+            if k == data_id:
+                return numpy.median(numpy.array(sorted(v)))
+
+    def _validate_data_year(self, file_name):
+        """  Validate file name and return the year """
+        regex = re.compile(r'([1-3][0-9]{3})')
+        match = regex.search(file_name)
+        try:
+            if match:
+                return int(match.group())
+            else:
+                raise ValueError('{} has a bad naming convention. Make sure the file name has year in the format "yyyy"'.format(file_name))
+        except ValueError as e:
+            sys.exit(e)
 
     def _get_source_parameters(self, data_var):
         """ Get files root directory """
@@ -273,8 +308,11 @@ class TrendCorrelation:
 
     def _delete_raster_file(self, del_file):
         """ Delete extracted file """
-        for f in del_file:
-            arcpy.Delete_management(f)
+        if type(del_file) is list:
+            for f in del_file:
+                arcpy.Delete_management(f)
+        else:
+            arcpy.Delete_management(del_file)
 
 
 def main():
