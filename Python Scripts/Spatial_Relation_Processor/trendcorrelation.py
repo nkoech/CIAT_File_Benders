@@ -151,25 +151,26 @@ class TrendCorrelation:
                 in_cell_size = self._get_cell_width(file_path)  # For current file
                 if self.res_fine:
                     if in_cell_size != fine_cell_size:
-                        self._resample_processor(file_path, fine_cell_size, new_file_startwith)  # Resample geoprocessor
+                        self._resample_processor(file_path, fine_cell_size, new_file_startwith, self.res_method)  # Resample geoprocessor
                         self._update_file_startwith(file_startswith, new_file_startwith)
                 else:
                     if in_cell_size != coarse_cell_size:
-                        self._resample_processor(file_path, coarse_cell_size, new_file_startwith)
+                        res_method = 'NEAREST'
+                        self._resample_processor(file_path, coarse_cell_size, new_file_startwith, res_method)
                         self._update_file_startwith(file_startswith, new_file_startwith)
 
     def _get_cell_width(self, file_path):
         """ Get raster cell size """
         return arcpy.Describe(file_path).meanCellWidth
 
-    def _resample_processor(self, file_path, cell_size, file_start_char):
+    def _resample_processor(self, file_path, cell_size, file_start_char, res_method):
         """ Resample image to coarse or fine cell size """
         in_ras = ntpath.basename(file_path)
         out_ras_name = file_start_char + in_ras
         out_ras_dir = ntpath.dirname(file_path)
         out_res_ras = os.path.join(out_ras_dir, out_ras_name).replace('\\', '/')
         print('Resampling..... {}'.format(in_ras))
-        arcpy.Resample_management(file_path, out_res_ras, cell_size, self.res_method)
+        arcpy.Resample_management(file_path, out_res_ras, cell_size, res_method)
 
     def _update_file_startwith(self, file_startswith, new_file_startwith):
         """ Update file startswith variable """
