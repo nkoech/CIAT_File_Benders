@@ -15,7 +15,6 @@ import re
 from readjson import get_json_data
 from sourcedirectory import get_directory
 import sys
-import traceback
 
 
 class TrendCorrelation:
@@ -58,7 +57,9 @@ class TrendCorrelation:
             os.makedirs(self.dest_dir)  # Create destination folder
 
         self._calculate_mean_raster()  # Calculate average raster
-        sxy_out_rasters, raw_mean_ras_startwith = self._calculate_sxy(data_years)  # Calculate Sxy raster
+        slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith = self._calculate_slope(data_years)  # Calculate Sxy raster
+
+        slope_test_out_rasters, syy_out_rasters = self._slope_test(data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith)  # Slope hypothesis testing (t0)
 
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
@@ -165,11 +166,8 @@ class TrendCorrelation:
 
     def _resample_processor(self, file_path, cell_size, file_start_char, res_method):
         """ Resample image to coarse or fine cell size """
-        in_ras = ntpath.basename(file_path)
-        out_ras_name = file_start_char + in_ras
-        out_ras_dir = ntpath.dirname(file_path)
-        out_res_ras = os.path.join(out_ras_dir, out_ras_name).replace('\\', '/')
-        print('Resampling..... {}'.format(in_ras))
+        out_res_ras = self._create_file_name(file_path, file_start_char)  # Create new file name from existing file
+        print('Resampling..... {}'.format(ntpath.basename(file_path)))
         arcpy.Resample_management(file_path, out_res_ras, cell_size, res_method)
 
     def _update_file_startwith(self, file_startswith, new_file_startwith):
@@ -187,9 +185,7 @@ class TrendCorrelation:
         if ras_file_list:
             for ras_files in ras_file_list:
                 if ras_files:
-                    out_ras_name = 'MEAN_' + ntpath.basename(ras_files[0])
-                    out_ras_dir = ntpath.dirname(ras_files[0])
-                    out_mean_ras = os.path.join(out_ras_dir, out_ras_name).replace('\\', '/')
+                    out_mean_ras = self._create_file_name(ras_files[0], 'MEAN_')
                     self._cell_statistics(ras_files, out_mean_ras, stat_type, ignore_nodata)
 
     def _get_mean_calculation_rasters(self):
@@ -211,41 +207,29 @@ class TrendCorrelation:
             ignore_nodata = ''
         arcpy.gp.CellStatistics_sa(ras_files, out_mean_ras, stat_type, ignore_nodata)
 
-    def _calculate_sxy(self, data_years):
+    def _calculate_slope(self, data_years):
         """ Calculate sxy from; input raster, mean input raster, year and median year """
+        sxx_out_values = {}
+        slope_out_rasters = {}
         sxy_out_rasters = {}
-        raw_mean_ras_startwith = 'MRAW_'
+        sxy_ras_startswith = 'SXY_'
+        raw_mean_ras_startswith = 'MRAW_'
         mean_rasters = self._get_all_mean_rasters()
         for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
-            sxy_out_ras = ''
-            sxy_del_rasters = []
-            mean_ras = self._get_mean_raster(mean_rasters, data_id)  # Get averaged raster for calculation
-            median_year = self._get_median_year(data_years, data_id)
-            for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
-                data_year = self._validate_data_year(file_name)  # Get raster year
-
-                out_raw_mean_ras = os.path.join(source_dir, raw_mean_ras_startwith + file_name).replace('\\', '/')
-                temp_raw_mean_ras = arcpy.Raster(file_path) - arcpy.Raster(mean_ras)
-                print('Saving..... {0}'.format(out_raw_mean_ras))
-                temp_raw_mean_ras.save(out_raw_mean_ras)
-
-                if sxy_out_ras:
-                    temp_out_ras = arcpy.Raster(sxy_out_ras) + ((data_year - median_year) * temp_raw_mean_ras)
-                    sxy_del_rasters.append(sxy_out_ras)  # Collect unwanted rasters to be deleted
-                    sxy_out_ras = os.path.join(source_dir, 'SXY_' + file_name).replace('\\', '/')
-                else:
-                    sxy_out_ras = os.path.join(source_dir, 'SXY_' + file_name).replace('\\', '/')
-                    temp_out_ras = (data_year - median_year) * temp_raw_mean_ras
-
-                print('Saving..... {0}'.format(sxy_out_ras))
-                temp_out_ras.save(sxy_out_ras)
-
+            mean_ras = self._get_mean_raster(mean_rasters, data_id)  # Calculate averaged raster
+            median_year = self._get_median_year(data_years, data_id)  # Calculate average year as median
+            sxx_out_val = self._calculate_sxx(data_years, data_id, median_year)  # Calculate sxx value
+            sxx_out_values[str(data_id)] = sxx_out_val
+            sxy_out_ras = self._calculate_sxy(root_dir, file_startswith, file_endswith, mean_ras, median_year, raw_mean_ras_startswith, sxy_ras_startswith)  # Calculate sxy raster
             sxy_out_rasters[str(data_id)] = str(sxy_out_ras)
-
-            self._delete_raster_file(mean_ras)  # Delete mean raster
-            self._delete_raster_file(sxy_del_rasters)  # Delete collected rasters
-
-        return sxy_out_rasters, raw_mean_ras_startwith
+            #  Calculate slope raster
+            slope_out_ras = self._create_ouput_file_name('SLOPE_', self.place_name, data_id, self.dest_dir, '.tif')  # Create final raster name
+            print('Calculating..... {0}'.format(slope_out_ras))
+            temp_out_ras = arcpy.Raster(sxy_out_ras)/sxx_out_val
+            print('Saving..... {0}'.format(slope_out_ras))
+            temp_out_ras.save(slope_out_ras)
+            slope_out_rasters[str(data_id)] = str(slope_out_ras)
+        return slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith
 
     def _get_all_mean_rasters(self):
         """ Get mean rasters to be used in sxy calculation """
@@ -261,7 +245,7 @@ class TrendCorrelation:
         if mean_rasters:
             for ras_file in mean_rasters:
                 mean_file_name = ntpath.basename(ras_file)
-                match = re.search(data_id, mean_file_name, re.I)  # Wrong
+                match = re.search(data_id, mean_file_name, re.I)
                 if match:
                     if match.group().lower() == data_id.lower():
                         return ras_file
@@ -271,6 +255,151 @@ class TrendCorrelation:
         for k, v in data_years.items():
             if k == data_id:
                 return numpy.median(numpy.array(sorted(v)))
+
+    def _calculate_sxx(self, data_years, data_id, median_year):
+        """ Calculate and return sxx """
+        out_sxx = 0
+        for k, v in data_years.items():
+            if k == data_id:
+                for year in v:
+                    out_sxx += (year - median_year)**2
+        return(out_sxx)
+
+    def _calculate_sxy(self, root_dir, file_startswith, file_endswith, mean_ras, median_year, raw_mean_ras_startwith, sxy_ras_startswith):
+        """ Calculate and return sxy raster """
+        sxy_out_ras = ''
+        first_sxy_out_ras = ''
+        del_rasters = []
+        for source_dir, file_path, file_name in get_file_location(root_dir, file_startswith, file_endswith):
+            data_year = self._validate_data_year(file_name)  # Get raster year
+            out_raw_mean_ras = os.path.join(source_dir, raw_mean_ras_startwith + file_name).replace('\\', '/')
+            print('Calculating..... {0}'.format(out_raw_mean_ras))
+            temp_raw_mean_ras = arcpy.Raster(file_path) - arcpy.Raster(mean_ras)
+            print('Saving..... {0}'.format(out_raw_mean_ras))
+            temp_raw_mean_ras.save(out_raw_mean_ras)
+            sxy_out_ras_name = sxy_ras_startswith + file_name
+            # Calculate Sxy raster
+            sxy_out_ras, first_sxy_out_ras, del_raster = self._calculate_sxy_syy(sxy_out_ras_name, sxy_out_ras, first_sxy_out_ras, source_dir, file_path, data_year, median_year, temp_raw_mean_ras)
+            if del_raster:
+                del_rasters.append(del_raster)
+        self._delete_raster_file(del_rasters)  # Delete collected rasters
+        self._delete_raster_file(mean_ras)  # Delete mean raster
+        return sxy_out_ras
+
+    def _slope_test(self, data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith):
+        """ Slope hypothesis testing (t0)"""
+        slope_test_out_rasters ={}
+        se_out_rasters, syy_out_rasters = self._calculate_standard_error(data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith)
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            slope_ras = self._get_calculated_raster(slope_out_rasters, data_id)
+            se_ras = self._get_calculated_raster(se_out_rasters, data_id)
+            slope_test_out_ras = self._create_ouput_file_name('SLOPE_TEST_', self.place_name, data_id, self.dest_dir, '.tif')
+            print('Calculating..... {0}'.format(slope_test_out_ras))
+            temp_out_ras = arcpy.Raster(slope_ras) / arcpy.Raster(se_ras)
+            print('Saving..... {0}'.format(slope_test_out_ras))
+            temp_out_ras.save(slope_test_out_ras)
+            slope_test_out_rasters[str(data_id)] = str(slope_test_out_ras)
+        return slope_test_out_rasters, syy_out_rasters
+
+    def _calculate_standard_error(self, data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith):
+        """ Calculate standard error """
+        se_out_rasters = {}
+        rss_ras_startswith = 'RSS_'
+        rss_out_rasters, syy_out_rasters = self._calculate_rss(slope_out_rasters, sxy_out_rasters, raw_mean_ras_startswith, rss_ras_startswith)  # Compute residual sum of squares
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            rss_ras = self._get_calculated_raster(rss_out_rasters, data_id)  # Get intermediate raster
+            data_yr = self._get_calculated_raster(data_years, data_id)  # Get data year
+            data_yr_cal = float(len(data_yr) - 2)
+            sxx_value = self._get_calculated_raster(sxx_out_values, data_id)
+            se_out_ras = self._create_ouput_file_name('SE_', self.place_name, data_id, self.dest_dir, '.tif')
+            print('Calculating..... {0}'.format(se_out_ras))
+            temp_out_ras = SquareRoot(arcpy.Raster(rss_ras)/(data_yr_cal/sxx_value))
+            print('Saving..... {0}'.format(se_out_ras))
+            temp_out_ras.save(se_out_ras)
+            se_out_rasters[str(data_id)] = str(se_out_ras)
+            self._delete_raster_file(rss_ras)
+        return se_out_rasters, syy_out_rasters
+
+    def _calculate_rss(self, slope_out_rasters, sxy_out_rasters, raw_mean_ras_startswith, rss_ras_startswith):
+        """ Compute residual sum of squares """
+        syy_out_rasters = {}
+        rss_out_rasters = {}
+        syy_ras_startswith = 'SYY_'
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            syy_out_ras = self._calculate_syy(root_dir, raw_mean_ras_startswith, file_endswith, syy_ras_startswith)  # Calculate Syy variable
+            syy_out_rasters[str(data_id)] = str(syy_out_ras)
+            slope_ras = self._get_calculated_raster(slope_out_rasters, data_id)
+            sxy_ras = self._get_calculated_raster(sxy_out_rasters, data_id)
+            rss_out_ras = self._create_file_name(syy_out_ras, rss_ras_startswith, syy_ras_startswith)
+            print('Calculating..... {0}'.format(rss_out_ras))
+            temp_out_ras = arcpy.Raster(syy_out_ras) - (arcpy.Raster(slope_ras) * arcpy.Raster(sxy_ras))
+            print('Saving..... {0}'.format(rss_out_ras))
+            temp_out_ras.save(rss_out_ras)
+            rss_out_rasters[str(data_id)] = str(rss_out_ras)
+        return rss_out_rasters, syy_out_rasters
+
+    def _calculate_syy(self, root_dir, raw_mean_ras_startswith, file_endswith, syy_ras_startswith):
+        """ Calculate and return Syy raster """
+        del_rasters = []
+        syy_out_ras = ''
+        first_syy_out_ras = ''
+        for source_dir, file_path, file_name in get_file_location(root_dir, raw_mean_ras_startswith, file_endswith):
+            syy_out_ras_name = syy_ras_startswith + file_name[len(raw_mean_ras_startswith):]
+            # Calculate Syy raster
+            syy_out_ras, first_syy_out_ras, del_raster = self._calculate_sxy_syy(syy_out_ras_name, syy_out_ras, first_syy_out_ras, source_dir, file_path)
+            if del_raster:
+                del_rasters.append(del_raster)
+        self._delete_raster_file(del_rasters)  # Delete collected rasters
+        return syy_out_ras
+
+    def _calculate_sxy_syy(self, out_ras_name, out_ras, first_out_ras, source_dir, file_path=None, data_year=None, median_year=None, temp_raw_mean_ras=None):
+        """ Calculate both Sxy and Syy """
+        del_raster = ''
+        if out_ras:
+            if out_ras == first_out_ras:
+                pass
+            else:
+                print('Calculating..... {0}'.format(out_ras))
+            if median_year:
+                temp_out_ras = arcpy.Raster(out_ras) + ((data_year - median_year) * temp_raw_mean_ras)
+            else:
+                temp_out_ras = arcpy.Raster(out_ras) + (arcpy.Raster(file_path) ** 2)
+            del_raster = out_ras  # Collect unwanted rasters to be deleted
+            out_ras = os.path.join(source_dir, out_ras_name).replace('\\', '/')
+        else:
+            out_ras = os.path.join(source_dir, out_ras_name).replace('\\', '/')
+            first_out_ras = out_ras
+            print('Calculating..... {0}'.format(out_ras))
+            if median_year:
+                temp_out_ras = (data_year - median_year) * temp_raw_mean_ras
+            else:
+                temp_out_ras = arcpy.Raster(file_path) ** 2
+        print('Saving..... {0}'.format(out_ras))
+        temp_out_ras.save(out_ras)
+        return out_ras, first_out_ras, del_raster
+
+    def _get_calculated_raster(self, in_raster, data_id):
+        """ Get intermediate raster to be used in further calculation """
+        for k, v in in_raster.items():
+            if k == data_id:
+                return v
+
+    def _create_file_name(self, in_path, join_char, ras_startswith=None):
+        """ Create new file name """
+        file_name = ntpath.basename(in_path)
+        dir_path = ntpath.dirname(in_path)
+        if ras_startswith:
+            out_ras_name = join_char + file_name[len(ras_startswith):]
+        else:
+            out_ras_name = join_char + file_name
+        new_ras_path = os.path.join(dir_path, out_ras_name).replace('\\', '/')
+        return new_ras_path
+
+    def _create_ouput_file_name(self, join_char, place_name, data_id, file_dest, file_ext):
+        """ Final output file name """
+        ras_name = join_char + place_name + '_' + data_id + file_ext
+        final_out_ras = os.path.join(file_dest, ras_name).replace('\\', '/')
+        return final_out_ras
 
     def _validate_data_year(self, file_name):
         """  Validate file name and return the year """
