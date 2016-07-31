@@ -61,6 +61,8 @@ class TrendCorrelation:
 
         slope_test_out_rasters, syy_out_rasters = self._slope_test(data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith)  # Slope hypothesis testing (t0)
 
+        r2_out_rasters = self._calculate_r2(sxx_out_values, sxy_out_rasters, syy_out_rasters)  # Calculate coefficient of determination - R2
+
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def _validate_data(self):
@@ -317,7 +319,7 @@ class TrendCorrelation:
             print('Saving..... {0}'.format(se_out_ras))
             temp_out_ras.save(se_out_ras)
             se_out_rasters[str(data_id)] = str(se_out_ras)
-            # self._delete_raster_file(rss_ras)
+            self._delete_raster_file(rss_ras)
         return se_out_rasters, syy_out_rasters
 
     def _calculate_rss(self, slope_out_rasters, sxy_out_rasters, raw_mean_ras_startswith, rss_ras_startswith):
@@ -363,7 +365,7 @@ class TrendCorrelation:
             if median_year:
                 temp_out_ras = arcpy.Raster(out_ras) + ((data_year - median_year) * temp_raw_mean_ras)
             else:
-                temp_out_ras = arcpy.Raster(out_ras) + (arcpy.Raster(file_path) ** 2)
+                temp_out_ras = arcpy.Raster(out_ras) + Power(file_path, 2)
             del_raster = out_ras  # Collect unwanted rasters to be deleted
             out_ras = os.path.join(source_dir, out_ras_name).replace('\\', '/')
         else:
@@ -373,10 +375,26 @@ class TrendCorrelation:
             if median_year:
                 temp_out_ras = (data_year - median_year) * temp_raw_mean_ras
             else:
-                temp_out_ras = arcpy.Raster(file_path) ** 2
+                temp_out_ras = Power(file_path, 2)
         print('Saving..... {0}'.format(out_ras))
         temp_out_ras.save(out_ras)
         return out_ras, first_out_ras, del_raster
+
+    def _calculate_r2(self, sxx_out_values, sxy_out_rasters, syy_out_rasters):
+        """ Calculate coefficient of determination - R2 """
+        r2_out_rasters = {}
+        for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
+            sxx_value = self._get_calculated_raster(sxx_out_values, data_id)
+            sxy_ras = self._get_calculated_raster(sxy_out_rasters, data_id)
+            syy_ras = self._get_calculated_raster(syy_out_rasters, data_id)
+            r2_out_ras = self._create_ouput_file_name('R2_', self.place_name, data_id, self.dest_dir, '.tif')
+            print('Calculating..... {0}'.format(r2_out_ras))
+            temp_out_ras = Power(sxy_ras, 2) / (sxx_value * arcpy.Raster(syy_ras))
+            print('Saving..... {0}'.format(r2_out_ras))
+            temp_out_ras.save(r2_out_ras)
+            r2_out_rasters[str(data_id)] = str(r2_out_ras)
+            self._delete_raster_file(sxy_ras)
+        return r2_out_rasters
 
     def _get_calculated_raster(self, in_raster, data_id):
         """ Get intermediate raster to be used in further calculation """
