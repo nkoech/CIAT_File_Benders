@@ -313,11 +313,11 @@ class TrendCorrelation:
             sxx_value = self._get_calculated_raster(sxx_out_values, data_id)
             se_out_ras = self._create_ouput_file_name('SE_', self.place_name, data_id, self.dest_dir, '.tif')
             print('Calculating..... {0}'.format(se_out_ras))
-            temp_out_ras = SquareRoot(arcpy.Raster(rss_ras)/(data_yr_cal/sxx_value))
+            temp_out_ras = SquareRoot(arcpy.Raster(rss_ras)/(data_yr_cal * sxx_value))
             print('Saving..... {0}'.format(se_out_ras))
             temp_out_ras.save(se_out_ras)
             se_out_rasters[str(data_id)] = str(se_out_ras)
-            self._delete_raster_file(rss_ras)
+            # self._delete_raster_file(rss_ras)
         return se_out_rasters, syy_out_rasters
 
     def _calculate_rss(self, slope_out_rasters, sxy_out_rasters, raw_mean_ras_startswith, rss_ras_startswith):
