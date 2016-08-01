@@ -49,7 +49,6 @@ class TrendCorrelation:
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
         cell_size, data_years = self._validate_data()  # Validated raster
-
         if len(cell_size) > 1:
             self._resample_raster(cell_size)  # Modify raster resolution
 
@@ -58,13 +57,10 @@ class TrendCorrelation:
 
         self._calculate_mean_raster()  # Calculate average raster
         slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith = self._calculate_slope(data_years)  # Calculate Sxy raster
-
         slope_test_out_rasters, syy_out_rasters, syy_ras_startswith = self._slope_test(data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith)  # Slope hypothesis testing (t0)
-
         r2_out_rasters = self._calculate_r2(sxx_out_values, sxy_out_rasters, syy_out_rasters)  # Calculate coefficient of determination - R2
-
         rxy_out_raster = self._calculate_rxy(syy_out_rasters, raw_mean_ras_startswith, syy_ras_startswith)  # Get Pearson's coefficient raster
-
+        rxy_test_out_raster = self._calculate_rxy_test(rxy_out_raster, data_years)  # Test Rxy output
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def _validate_data(self):
@@ -85,7 +81,6 @@ class TrendCorrelation:
                     ras_resolution.append(cell_size)
                 prev_file_path = file_path  # For spatial reference validation
             data_years[str(data_id)] = data_years_pair
-
         self._validated_place_name()  # Validated area of interest name as three letter acronym
         return ras_resolution, data_years
 
@@ -292,7 +287,7 @@ class TrendCorrelation:
         for root_dir, file_startswith, file_endswith, data_id in self._get_source_parameters(self.data_var):
             slope_ras = self._get_data_value(slope_out_rasters, data_id)
             se_ras = self._get_data_value(se_out_rasters, data_id)
-            slope_test_out_ras = self._create_output_file_name('SLOPE_TEST_', self.place_name, self.dest_dir, '.tif', data_id)
+            slope_test_out_ras = self._create_output_file_name('SLOPE_Test_', self.place_name, self.dest_dir, '.tif', data_id)
             print('Calculating..... {0}'.format(slope_test_out_ras))
             temp_out_ras = arcpy.Raster(slope_ras) / arcpy.Raster(se_ras)
             print('Saving..... {0}'.format(slope_test_out_ras))
@@ -392,6 +387,7 @@ class TrendCorrelation:
         temp_out_ras.save(rxy_out_raster)
         del_files = [rxy_numr_out_ras, rxy_denmr_out_ras]
         self._delete_raster_file(del_files)
+        return rxy_out_raster
 
     def _calculate_rxy_numerator(self, raw_mean_ras_startswith):
         """ Get Pearson's coefficient numerator raster """
@@ -449,7 +445,6 @@ class TrendCorrelation:
             else:
                 temp_rxy_denmr_ras = self._create_file_name(syy_ras, temp_rxy_denmr_startswith, syy_ras_startswith)  # Set temp output file
                 prev_in_ras = syy_ras
-
         if temp_rxy_denmr_ras and rxy_denmr_out_ras:
             print('Calculating..... {0}'.format(rxy_denmr_out_ras))
             temp_out_ras = SquareRoot(arcpy.Raster(temp_rxy_denmr_ras))
@@ -458,8 +453,47 @@ class TrendCorrelation:
             self._delete_raster_file(temp_rxy_denmr_ras)
         return rxy_denmr_out_ras
 
+    def _calculate_rxy_test(self, rxy_out_raster, data_years):
+        """ Test Rxy output """
+        max_num_years = self._get_max_number_years(data_years)  # Get maximum number of years
+        z_out_raster, del_file = self._calculate_z(rxy_out_raster)  # Calculate z value
+        rxy_test_out_raster = self._create_output_file_name('RXY_Test_', self.place_name, self.dest_dir, '.tif')
+        print('Calculating..... {0}'.format(rxy_test_out_raster))
+        if max_num_years:
+            temp_out_ras = arcpy.Raster(z_out_raster) * SquareRoot(max_num_years - 3)
+            print('Saving..... {0}'.format(rxy_test_out_raster))
+            temp_out_ras.save(rxy_test_out_raster)
+        self._delete_raster_file(del_file)
+        return rxy_test_out_raster
+
+    def _calculate_z(self, rxy_out_raster):
+        """ Calculate z value """
+        z_out_raster = self._create_output_file_name('Z_Test_', self.place_name, self.dest_dir, '.tif')
+        print('Calculating..... {0}'.format(z_out_raster))
+        temp_out_ras = Ln((1 + arcpy.Raster(rxy_out_raster))/(1 - arcpy.Raster(rxy_out_raster))) * 0.5
+        print('Saving..... {0}'.format(z_out_raster))
+        temp_out_ras.save(z_out_raster)
+        del_file = z_out_raster
+        return z_out_raster, del_file
+
+    def _get_max_number_years(self, data_years):
+        """ Get maximum number of years """
+        max_num_years = ''
+        for num_years in self._get_number_years(data_years):
+            if max_num_years:
+                if num_years > max_num_years:
+                    max_num_years = num_years
+            else:
+                max_num_years = num_years
+        return max_num_years
+
+    def _get_number_years(self, data_year):
+        """ Get number of years """
+        for k, v in data_year.items():
+            yield len(v)
+
     def _derive_variable_raster(self, out_ras_name, out_ras, first_out_ras, source_dir, file_path=None, data_year=None, median_year=None, temp_raw_mean_ras=None):
-        """ Calculate both Sxy and Syy """
+        """ Calculate variable value and raster"""
         del_raster = ''
         if out_ras:
             if out_ras == first_out_ras:
@@ -493,11 +527,14 @@ class TrendCorrelation:
     def _get_data_value(self, in_dict, data_id=None, attr=None):
         """ Get data values from dictionary """
         for k, v in in_dict.items():
-            if k == data_id:
-                if attr == 'median':
-                    return numpy.median(numpy.array(sorted(v)))
-                else:
-                    return v
+            if data_id:
+                if k == data_id:
+                    if attr == 'median':
+                        return numpy.median(numpy.array(sorted(v)))
+                    else:
+                        return v
+            else:
+                return v
 
     def _validate_data_year(self, file_name):
         """  Validate file name and return the year """
