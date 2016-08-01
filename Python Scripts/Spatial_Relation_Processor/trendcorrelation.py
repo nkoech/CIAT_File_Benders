@@ -305,7 +305,7 @@ class TrendCorrelation:
             data_yr = self._get_data_value(data_years, data_id)  # Get data year
             data_yr_cal = float(len(data_yr) - 2)
             sxx_value = self._get_data_value(sxx_out_values, data_id)
-            se_out_ras = self._create_output_file_name('SE_', self.place_name, self.dest_dir, '.tif', data_id)
+            se_out_ras = self._create_output_file_name('Slope_Test_SE_', self.place_name, self.dest_dir, '.tif', data_id)
             print('Calculating..... {0}'.format(se_out_ras))
             temp_out_ras = SquareRoot(arcpy.Raster(rss_ras)/(data_yr_cal * sxx_value))
             print('Saving..... {0}'.format(se_out_ras))
