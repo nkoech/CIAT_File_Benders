@@ -172,7 +172,8 @@ class TrendCorrelation:
         """ Resample image to coarse or fine cell size """
         out_res_ras = self._create_file_name(file_path, file_start_char)  # Create new file name from existing file
         print('Resampling..... {}'.format(ntpath.basename(file_path)))
-        arcpy.Resample_management(file_path, out_res_ras, cell_size, res_method)
+        upper_res_method = res_method.upper()
+        arcpy.Resample_management(file_path, out_res_ras, cell_size, upper_res_method)
 
     def _update_file_startwith(self, file_startswith, new_file_startwith):
         """ Update file startswith variable """
