@@ -277,7 +277,7 @@ class TrendCorrelation:
             temp_raw_mean_ras.save(out_raw_mean_ras)
             sxy_out_ras_name = sxy_ras_startswith + file_name
             # Calculate Sxy raster
-            sxy_out_ras, first_sxy_out_ras, del_raster = self._calculate_sxy_syy(sxy_out_ras_name, sxy_out_ras, first_sxy_out_ras, source_dir, file_path, data_year, median_year, temp_raw_mean_ras)
+            sxy_out_ras, first_sxy_out_ras, del_raster = self._derive_variable_raster(sxy_out_ras_name, sxy_out_ras, first_sxy_out_ras, source_dir, file_path, data_year, median_year, temp_raw_mean_ras)
             if del_raster:
                 del_rasters.append(del_raster)
         self._delete_raster_file(del_rasters)  # Delete collected rasters
@@ -344,7 +344,7 @@ class TrendCorrelation:
         for source_dir, file_path, file_name in get_file_location(root_dir, raw_mean_ras_startswith, file_endswith):
             syy_out_ras_name = syy_ras_startswith + file_name[len(raw_mean_ras_startswith):]
             # Calculate Syy raster
-            syy_out_ras, first_syy_out_ras, del_raster = self._calculate_sxy_syy(syy_out_ras_name, syy_out_ras, first_syy_out_ras, source_dir, file_path)
+            syy_out_ras, first_syy_out_ras, del_raster = self._derive_variable_raster(syy_out_ras_name, syy_out_ras, first_syy_out_ras, source_dir, file_path)
             if del_raster:
                 del_rasters.append(del_raster)
         self._delete_raster_file(del_rasters)  # Delete collected rasters
@@ -421,7 +421,7 @@ class TrendCorrelation:
                                         # Calculate rxy numerator raster
                                         in_file_paths = [outer_ras_path, ras_path]
                                         rxy_numr_ras_name = rxy_numr_startswith + file_name[len(raw_mean_ras_startswith):]
-                                        rxy_numr_out_ras, first_rxy_numr_out_ra, del_raster = self._calculate_sxy_syy(rxy_numr_ras_name, rxy_numr_out_ras, first_rxy_numr_out_ras, source_dir, in_file_paths)
+                                        rxy_numr_out_ras, first_rxy_numr_out_ra, del_raster = self._derive_variable_raster(rxy_numr_ras_name, rxy_numr_out_ras, first_rxy_numr_out_ras, source_dir, in_file_paths)
                                         if del_raster:
                                             del_rasters.append(del_raster)
                                     self._delete_raster_file(ras_path)
@@ -436,7 +436,7 @@ class TrendCorrelation:
         for source_dir, file_path, file_name in get_file_location(root_dir, raw_mean_ras_startswith, file_endswith):
             yield source_dir, file_path, file_name
 
-    def _calculate_sxy_syy(self, out_ras_name, out_ras, first_out_ras, source_dir, file_path=None, data_year=None, median_year=None, temp_raw_mean_ras=None):
+    def _derive_variable_raster(self, out_ras_name, out_ras, first_out_ras, source_dir, file_path=None, data_year=None, median_year=None, temp_raw_mean_ras=None):
         """ Calculate both Sxy and Syy """
         del_raster = ''
         if out_ras:
