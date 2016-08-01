@@ -25,8 +25,8 @@
   "file_settings": [
     {
       "aoi_place_name": "KEN",
-      "resample_method": "NEAREST",
-      "resample_fine": false
+      "resample_method": "BILINEAR",
+      "resample_fine": true
     }
   ]
 }
