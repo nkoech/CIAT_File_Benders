@@ -1,0 +1,22 @@
+{
+  "src": [
+    {
+      "src_dir": "C:/Data/Intermediate_Ouputs/NDVI/Test",
+      "dir_param": false,
+      "file_start": false,
+      "file_end": "_wm2.tif"
+    }
+  ],
+  "dest": [
+    {
+      "dest_dir": "D:/Junk/Test"
+    }
+  ],
+  "raster_settings": [
+    {
+      "reproject_to_ESPG": 32736,
+      "resample_method": "nearest",
+      "cell_size": 250
+    }
+  ]
+}

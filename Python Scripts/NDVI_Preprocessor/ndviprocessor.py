@@ -110,7 +110,7 @@ class NDVIProcessor:
         # Perform mosaic and cell statistics
         for file_paths in self._get_stitch_files(file_name_id):
             if file_paths:
-                current_ref, target_ref_name = self._get_spatial_ref(file_paths[0], self.target_ref)
+                current_ref, target_ref = self._get_spatial_ref(file_paths[0], self.target_ref)
                 if self.mosaic_operation:
                     pixel_type = '8_BIT_UNSIGNED'
                     mosaic_operator = 'LAST'
@@ -194,10 +194,10 @@ class NDVIProcessor:
         proj_out_ras = None
         where_clause_val1 = "VALUE = 0"
         file_path = os.path.join(source_dir, file_name).replace('\\', '/')
-        current_ref, target_ref_name = self._get_spatial_ref(file_path, self.target_ref)
+        current_ref, target_ref = self._get_spatial_ref(file_path, self.target_ref)
         try:
-            if current_ref.name != target_ref_name:
-                proj_out_ras = self._reproject_raster(current_ref, target_ref_name, file_path)  # Reproject raster
+            if current_ref.name != target_ref.name:
+                proj_out_ras = self._reproject_raster(current_ref, target_ref, file_path)  # Reproject raster
             else:
                 raise ValueError('Raster processing FAILED! {0} projection is similar to that of the target reference.'.format(current_ref.name))
         except ValueError as e:
@@ -209,15 +209,15 @@ class NDVIProcessor:
 
     def geoprocess_raster(self, file_path):
         """ Raster geoprocessing interface """
-        current_ref, target_ref_name = self._get_spatial_ref(file_path, self.target_ref)
+        current_ref, target_ref = self._get_spatial_ref(file_path, self.target_ref)
         file_name = ntpath.basename(file_path)[5:]
         proj_out_ras = file_path
         if not self.mosaic_operation:
             file_name = ntpath.basename(file_path)
             try:
-                if current_ref.name != target_ref_name:
+                if current_ref.name != target_ref.name:
                     # Reproject input raster
-                    proj_out_ras = self._reproject_raster(current_ref, target_ref_name, file_path)
+                    proj_out_ras = self._reproject_raster(current_ref, target_ref, file_path)
                 else:
                     raise ValueError('Raster processing FAILED! {0} projection is similar to that of the target reference.'.format(current_ref.name))
             except ValueError as e:
@@ -247,19 +247,19 @@ class NDVIProcessor:
             desc = arcpy.Describe(file_path)
             current_ref = desc.spatialReference
             if target_ref:
-                target_ref_name = target_ref.split('[')[1].split(',')[0].strip("'")
-                return current_ref, target_ref_name
+                target_ref = arcpy.SpatialReference(target_ref)
+                return current_ref, target_ref
             else:
                 return
         except IOError as (e):
             print(str(e) + ' or is invalid/corrupted. Remove the bad file and run the process again')
 
-    def _reproject_raster(self, current_ref, target_ref_name, file_path):
+    def _reproject_raster(self, current_ref, target_ref, file_path):
         """ Reproject raster """
         file_name = ntpath.basename(file_path)
         proj_out_ras = self.dest_dir + '/PROJ_' + file_name
-        print('Projecting..... {0} from {1} to {2}'.format(file_name, current_ref.name, target_ref_name))
-        arcpy.ProjectRaster_management(file_path, proj_out_ras, '"' + self.target_ref + '"', '', '', '', '', current_ref)
+        print('Projecting..... {0} from {1} to {2}'.format(file_name, current_ref.name, target_ref.name))
+        arcpy.ProjectRaster_management(file_path, proj_out_ras, target_ref, '', '', '', '', current_ref)
         return proj_out_ras
 
     def _raster_to_float(self, proj_out_ras):

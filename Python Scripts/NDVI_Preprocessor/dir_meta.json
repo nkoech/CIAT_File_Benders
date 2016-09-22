@@ -1,22 +1,22 @@
 {
   "src": [
     {
-      "src_dir": "C:/Data",
-      "dir_param": "NDV",
-      "file_start": "africa_",
+      "src_dir": "C:/Data/Babati/NDVI_Test/Raw",
+      "dir_param": false,
+      "file_start": false,
       "file_end": "_wm2.tif"
     }
   ],
   "dest": [
     {
-      "dest_dir": "C:/Data/Kenya/NDVI/Test"
+      "dest_dir": "C:/Data/Babati/NDVI_Test/Out"
     }
   ],
   "target_reference": [
     {
       "aoi_boundary": "D:/Data/Data/KEN_Admin/KEN_Ilemi_Admin_Buffer.shp",
       "aoi_place_name": "KEN",
-      "reproject_to": "GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433],METADATA['World',-180.0,-90.0,180.0,90.0,0.0,0.0174532925199433,0.0,1262]]"
+      "reproject_to": 4326
     }
   ],
   "mosaic_details": [
