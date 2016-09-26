@@ -1,7 +1,7 @@
 {
   "src_1": [
     {
-      "src_dir_1": "C:/Data",
+      "src_dir_1": "C:/Data/Intermediate_Ouputs",
       "datatype_in_filename_1": "NDVI",
       "dir_startswith_1": "NDVI",
       "file_startswith_1": "MVC.KEN.",
@@ -10,7 +10,7 @@
   ],
   "src_2": [
     {
-      "src_dir_2": "C:/Data",
+      "src_dir_2": "C:/Data/Intermediate_Ouputs",
       "datatype_in_filename_2": "CHIRPS",
       "dir_startswith_2": "CHIRPS",
       "file_startswith_2": "KEN_chirps-",
@@ -19,7 +19,7 @@
   ],
   "dest": [
     {
-      "dest_dir": "C:/Data/Trend_Correlation"
+      "dest_dir": "C:/Data/Intermediate_Ouputs/Test"
     }
   ],
   "file_settings": [
@@ -27,6 +27,15 @@
       "aoi_place_name": "KEN",
       "resample_method": "nearest",
       "resample_fine": true
+    }
+  ],
+  "significant_test": [
+    {
+      "slope_critical_val_1": 1.345,
+      "slope_critical_val_2": false,
+      "correlation_critical_val_1": 1.345,
+      "correlation_critical_val_2": false,
+      "correlation_insignificant_val": 0.45
     }
   ]
 }

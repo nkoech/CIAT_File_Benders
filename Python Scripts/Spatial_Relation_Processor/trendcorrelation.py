@@ -35,6 +35,11 @@ class TrendCorrelation:
         self.place_name = self.tool_settings['aoi_place_name']
         self.res_fine = self.tool_settings['resample_fine']
         self.res_method = self.tool_settings['resample_method']
+        self.slope_critical_val_1 = self.tool_settings['slope_critical_val_1']
+        self.slope_critical_val_2 = self.tool_settings['slope_critical_val_2']
+        self.corr_critical_val_1 = self.tool_settings['correlation_critical_val_1']
+        self.corr_critical_val_2 = self.tool_settings['correlation_critical_val_2']
+        self.corr_insignificant = self.tool_settings['correlation_insignificant_val']
 
     def _get_user_parameters(self):
         """Get contents from a Json file"""
@@ -56,11 +61,17 @@ class TrendCorrelation:
             os.makedirs(self.dest_dir)  # Create destination folder
 
         self._calculate_mean_raster()  # Calculate average raster
-        slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith = self._calculate_slope(data_years)  # Calculate Sxy raster
-        slope_test_out_rasters, syy_out_rasters, syy_ras_startswith = self._slope_test(data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith)  # Slope hypothesis testing (t0)
+        # Calculate Sxy raster
+        slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith = self._calculate_slope(data_years)
+        slope_test_out_rasters, syy_out_rasters, syy_ras_startswith = self._slope_test(
+            data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith
+        )  # Slope hypothesis testing (t0)
+        slope_test_sig_out_rasters = self._init_slope_significance_test(slope_test_out_rasters)  # Slope significance test
         r2_out_rasters = self._calculate_r2(sxx_out_values, sxy_out_rasters, syy_out_rasters)  # Calculate coefficient of determination - R2
         rxy_out_raster = self._calculate_rxy(syy_out_rasters, raw_mean_ras_startswith, syy_ras_startswith)  # Get Pearson's coefficient raster
         rxy_test_out_raster = self._calculate_rxy_test(rxy_out_raster, data_years)  # Test Rxy output
+        rxy_test_sig_out_rasters = self._init_rxy_significance_test(rxy_test_out_raster, rxy_out_raster)  # Slope significance test calculation
+        dif_sig_out_rasters = self._dif_slope_vs_rxy_sig(slope_test_sig_out_rasters, rxy_test_sig_out_rasters)
         print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
 
     def _validate_data(self):
@@ -81,7 +92,9 @@ class TrendCorrelation:
                     ras_resolution.append(cell_size)
                 prev_file_path = file_path  # For spatial reference validation
             data_years[str(data_id)] = data_years_pair
-        self._validated_place_name()  # Validated area of interest name as three letter acronym
+        self._validate_place_name()  # Validated area of interest name as three letter acronym
+        self._validate_critical_val()  # Validate critical values
+        self._validate_correlation_insig_val()
         return ras_resolution, data_years
 
     def _validate_file_name(self, file_name, data_id):
@@ -133,13 +146,58 @@ class TrendCorrelation:
         else:
             return cell_width
 
-    def _validated_place_name(self):
+    def _validate_place_name(self):
         """ Check place name acronym """
         try:
             if len(self.place_name) != 3:
                 raise ValueError('Input value "{0}" should be made of three characters'.format(self.place_name))
         except ValueError as e:
             print(e)
+
+    def _validate_critical_val(self):
+        """ Check slope and rxy critical values integrity """
+        self._check_critical_val_type(self.slope_critical_val_1, 'slope_critical_val_1')
+        self._check_critical_val_type(self.corr_critical_val_1, 'corr_critical_val_1')
+        self._check_critical_val_type(self.slope_critical_val_2, 'slope_critical_val_2')
+        self._check_critical_val_type(self.corr_critical_val_2, 'corr_critical_val_2')
+        self._unique_critical_val(
+            self.slope_critical_val_1,
+            self.slope_critical_val_2,
+            '"slope_critical_val_1" and "slope_critical_val_2"'
+        )
+        self._unique_critical_val(
+            self.corr_critical_val_1,
+            self.corr_critical_val_2,
+            '"corr_critical_val_1" and "corr_critical_val_2"'
+        )
+
+    def _check_critical_val_type(self, val, msg):
+        """ Check for critical value data type """
+        try:
+            if not self._get_type(val):
+                raise ValueError('"' + msg + '" must be an integer')
+        except ValueError as e:
+            sys.exit(e)
+
+    def _unique_critical_val(self, critical_val_1, critical_val_2, msg):
+        """ Check uniqueness of a critical value """
+        try:
+            if critical_val_1 and critical_val_2:
+                if critical_val_1 == critical_val_2:
+                    raise ValueError(msg + ' cannot be the same')
+        except ValueError as e:
+            sys.exit(e)
+
+    def _validate_correlation_insig_val(self):
+        """ Check correlation insignificant value """
+        try:
+            if self.corr_critical_val_1 or self.corr_critical_val_2:
+                if not self.corr_insignificant:
+                    raise ValueError('"correlation_insignificant_val" must be provided')
+                elif not self._get_type(self.corr_insignificant):
+                    raise ValueError('"correlation_insignificant_val" must be an integer')
+        except ValueError as e:
+            sys.exit(e)
 
     def _resample_raster(self, cell_size):
         """ Modify raster resolution """
@@ -294,6 +352,33 @@ class TrendCorrelation:
             temp_out_ras.save(slope_test_out_ras)
             slope_test_out_rasters[str(data_id)] = str(slope_test_out_ras)
         return slope_test_out_rasters, syy_out_rasters, syy_ras_startswith
+
+    def _init_slope_significance_test(self, slope_test_rasters):
+        """ Slope significance test """
+        slope_test_sig_out_rasters = {}
+        for data_id, slope_test_raster in slope_test_rasters.items():
+            critical_val = None
+            if self.slope_critical_val_1 and self.slope_critical_val_2:
+                # For slope_critical_val_1
+                slope_test_sig_out_rasters.update(
+                    self._slope_rxy_significance_test(self.slope_critical_val_1, '_SIG_1', slope_test_raster, data_id)
+                )
+
+                # For slope_critical_val_2
+                slope_test_sig_out_rasters.update(
+                    self._slope_rxy_significance_test(self.slope_critical_val_2, '_SIG_2', slope_test_raster, data_id)
+                )
+            else:
+                # For slope_critical_val_1
+                slope_test_sig_out_rasters.update(
+                    self._slope_rxy_significance_test(self.slope_critical_val_1, '_SIG', slope_test_raster, data_id)
+                )
+
+                # For slope_critical_val_2
+                slope_test_sig_out_rasters.update(
+                    self._slope_rxy_significance_test(self.slope_critical_val_2, '_SIG', slope_test_raster, data_id)
+                )
+        return slope_test_sig_out_rasters
 
     def _calculate_standard_error(self, data_years, slope_out_rasters, sxx_out_values, sxy_out_rasters, raw_mean_ras_startswith):
         """ Calculate standard error """
@@ -466,6 +551,256 @@ class TrendCorrelation:
         self._delete_raster_file(del_file)
         return rxy_test_out_raster
 
+    def _init_rxy_significance_test(self, rxy_test_out_raster, rxy_out_raster):
+        """ Initialize Rxy significance test """
+        rxy_test_sig_out_rasters = {}
+        rxy_rasters = [rxy_test_out_raster, rxy_out_raster]
+        if self.corr_critical_val_1 and self.corr_critical_val_2:
+            # For corr_critical_val_1
+            rxy_test_sig_out_rasters.update(
+                self._slope_rxy_significance_test(self.corr_critical_val_1, 'RXY_SIG_1', rxy_rasters)
+            )
+
+            # For corr_critical_val_2
+            rxy_test_sig_out_rasters.update(
+                self._slope_rxy_significance_test(self.corr_critical_val_2, 'RXY_SIG_2', rxy_rasters)
+            )
+        else:
+            # For corr_critical_val_1
+            rxy_test_sig_out_rasters.update(
+                self._slope_rxy_significance_test(self.corr_critical_val_1, 'RXY_SIG', rxy_rasters)
+            )
+
+            # For corr_critical_val_2
+            rxy_test_sig_out_rasters.update(
+                self._slope_rxy_significance_test(self.corr_critical_val_2, 'RXY_SIG', rxy_rasters)
+            )
+        return rxy_test_sig_out_rasters
+
+    def _slope_rxy_significance_test(self, critical_val, concat_str, test_rasters, data_id=None):
+        """ Slope and Rxy significance test """
+        test_sig_out_rasters = {}
+        if critical_val:
+            if data_id:
+                test_sig_out_ras = self._calculate_significance_test(
+                    test_rasters, critical_val, concat_str, data_id
+                )
+                test_sig_out_rasters[str(data_id + concat_str)] = str(test_sig_out_ras)
+            else:
+                test_sig_out_ras = self._calculate_significance_test(
+                    test_rasters, critical_val, concat_str
+                )
+                test_sig_out_rasters[concat_str] = str(test_sig_out_ras)
+        return test_sig_out_rasters
+
+    def _calculate_significance_test(self, in_raster, critical_val, concat_str, data_id=None):
+        """ Calculate significance test """
+        if data_id:
+            slope_test_ras = Raster(in_raster)
+            sig_out_ras = self._create_output_file_name(
+                'SLOPE_Test' + concat_str + '_', self.place_name, self.dest_dir, '.tif', data_id
+            )
+            print('Calculating significance test ..... {0}'.format(sig_out_ras))
+            temp_out_ras = self._calculate_slope_significance_test(slope_test_ras, critical_val)
+
+        else:
+            rxy_test_ras = Raster(in_raster[0])
+            rxy_ras = Raster(in_raster[1])
+            sig_out_ras = self._create_output_file_name(
+                concat_str + '_Test_', self.place_name, self.dest_dir, '.tif'
+            )
+            if self.corr_insignificant:
+                print('Calculating significance test ..... {0}'.format(sig_out_ras))
+                temp_out_ras = self._calculate_rxy_significance_test(
+                    rxy_ras, rxy_test_ras, self.corr_insignificant, critical_val
+                )
+            else:
+                raise ValueError('Correlation insignificant value missing. Add and run again.')
+
+        print('Saving..... {0}'.format(sig_out_ras))
+        temp_out_ras.save(sig_out_ras)
+        return sig_out_ras
+
+    def _calculate_slope_significance_test(self, slope_test_ras, critical_val):
+        """ Calculate slope significance test """
+        temp_out_ras = Con(
+            (slope_test_ras < critical_val) & (slope_test_ras > -critical_val), 0,
+            Con(slope_test_ras >= critical_val, 1, -1)
+        )
+        return temp_out_ras
+
+    def _calculate_rxy_significance_test(self, rxy_ras, rxy_test_ras, corr_insignificant, critical_val):
+        """ Calculate rxy significance test """
+        temp_out_ras = Con(
+            (rxy_ras > -corr_insignificant) & (rxy_ras < corr_insignificant), 0,
+            Con(
+                (rxy_ras <= -corr_insignificant) & (rxy_test_ras <= -critical_val), -1,
+                Con((rxy_ras >= corr_insignificant) & (rxy_test_ras >= critical_val), 1, 1)
+            )
+        )
+        return temp_out_ras
+
+    def _dif_slope_vs_rxy_sig(self, slope_test_sig_out_rasters, rxy_test_sig_out_rasters):
+        """ Compare trend and  correlation"""
+        dif_sig_out_rasters ={}
+        if slope_test_sig_out_rasters:
+            for k, v in slope_test_sig_out_rasters.items():
+                if rxy_test_sig_out_rasters:
+                    count = 1
+                    for i, j in rxy_test_sig_out_rasters.items():
+                        if self._get_type(k[-1:]) and self._get_type(i[-1:]):
+                            dif_sig_out_ras, data_id = self._all_critical_values(
+                                self.slope_critical_val_1,
+                                self.corr_critical_val_1,
+                                k, i, '1', '1', v, j, count
+                            )
+                            dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+
+                            dif_sig_out_ras, data_id = self._all_critical_values(
+                                self.slope_critical_val_1,
+                                self.corr_critical_val_2,
+                                k, i, '1', '2', v, j, count
+                            )
+                            dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+
+                            dif_sig_out_ras, data_id = self._all_critical_values(
+                                self.slope_critical_val_2,
+                                self.corr_critical_val_1,
+                                k, i, '2', '1', v, j, count
+                            )
+                            dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+
+                            dif_sig_out_ras, data_id = self._all_critical_values(
+                                self.slope_critical_val_2,
+                                self.corr_critical_val_2,
+                                k, i, '2', '2', v, j, count
+                            )
+                            dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+                        else:
+                            if self._get_type(k[-1:]):
+                                dif_sig_out_ras, data_id = self._three_critical_value(
+                                    k, i,
+                                    self.slope_critical_val_1,
+                                    self.corr_critical_val_1,
+                                    self.corr_critical_val_2,
+                                    '1', v, j
+                                )
+                                dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+
+                                dif_sig_out_ras, data_id = self._three_critical_value(
+                                    k, i,
+                                    self.slope_critical_val_2,
+                                    self.corr_critical_val_1,
+                                    self.corr_critical_val_2,
+                                    '2', v, j
+                                )
+                                dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+                            elif self._get_type(i[-1:]):
+                                dif_sig_out_ras, data_id = self._three_critical_value(
+                                    i, k,
+                                    self.corr_critical_val_1,
+                                    self.slope_critical_val_1,
+                                    self.slope_critical_val_2,
+                                    '1', v, j
+                                )
+                                dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+
+                                dif_sig_out_ras, data_id = self._three_critical_value(
+                                    i, k,
+                                    self.corr_critical_val_2,
+                                    self.slope_critical_val_1,
+                                    self.slope_critical_val_2,
+                                    '2', v, j
+                                )
+                                dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+                            else:
+                                if v and j:
+                                    if (self._get_float(self.slope_critical_val_1) or
+                                            self._get_float(self.slope_critical_val_2)) == \
+                                            (self._get_float(self.corr_critical_val_1) or
+                                                 self._get_float(self.corr_critical_val_2)):
+                                        dif_sig_out_ras, data_id = self._two_critical_value(k, i, v, j)
+                                        dif_sig_out_rasters[data_id] = str(dif_sig_out_ras)
+                        count += 1
+        return dif_sig_out_rasters
+
+    def _all_critical_values(self, slope_val, corr_val, key_1, key_2, id_1,
+                             id_2, slope_sig_raster, rxy_sig_raster, count):
+        """  Calculates difference when all critical values are provided """
+        dif_sig_out_ras, data_id = self._critical_values_file(key_1, key_2, count)
+        if slope_val == corr_val:
+            if key_1[-1:] == id_1 and key_2[-1:] == id_2:
+                print('Calculating significance test difference ..... {0}'.format(dif_sig_out_ras))
+                temp_out_ras = self._calculate_slope_vs_rxy_sig(slope_sig_raster, rxy_sig_raster)
+                print('Saving..... {0}'.format(dif_sig_out_ras))
+                if arcpy.Exists(temp_out_ras):
+                    temp_out_ras.save(dif_sig_out_ras)
+        return dif_sig_out_ras, data_id
+
+    def _three_critical_value(self, key_1, key_2, critical_val_1, critical_val_2,
+                               critical_val_3, id, slope_sig_raster, rxy_sig_raster):
+        """ Calculates difference when a single critical value is false """
+        dif_sig_out_ras, data_id = self._critical_values_file(key_1, key_2)
+        if key_1[-1:] == id:
+            temp_out_ras = ''
+            if critical_val_1 == critical_val_2:
+                print('Calculating significance test difference ..... {0}'.format(dif_sig_out_ras))
+                temp_out_ras = self._calculate_slope_vs_rxy_sig(slope_sig_raster, rxy_sig_raster)
+            elif critical_val_1 == critical_val_3:
+                print('Calculating significance test difference ..... {0}'.format(dif_sig_out_ras))
+                temp_out_ras = self._calculate_slope_vs_rxy_sig(slope_sig_raster, rxy_sig_raster)
+            if arcpy.Exists(temp_out_ras):
+                temp_out_ras.save(dif_sig_out_ras)
+        return dif_sig_out_ras, data_id
+
+    def _two_critical_value(self, key_1, key_2, slope_sig_raster, rxy_sig_raster):
+        """ Calculates difference when a single critical value is false """
+        dif_sig_out_ras, data_id = self._critical_values_file(key_1, key_2)
+        print('Calculating significance test difference ..... {0}'.format(dif_sig_out_ras))
+        temp_out_ras = self._calculate_slope_vs_rxy_sig(slope_sig_raster, rxy_sig_raster)
+        if arcpy.Exists(temp_out_ras):
+            temp_out_ras.save(dif_sig_out_ras)
+        return dif_sig_out_ras, data_id
+
+    def _critical_values_file(self, key_1, key_2, count=None):
+        """ Create critical values file """
+        data_id_1 = key_1.split('_')[0:1][0]
+        data_id_2 = key_2.split('_')[0:1][0]
+        data_id = data_id_1 + '_' + data_id_2 + '_' + 'SIG'
+        if count:
+            data_id = data_id_1 + '_' + data_id_2 + '_' + 'SIG_' + str(count)
+        dif_sig_out_ras = self._create_output_file_name(
+            'DIF_', self.place_name, self.dest_dir, '.tif', data_id
+        )
+        data_id = 'DIF_' + data_id
+        return dif_sig_out_ras, data_id
+
+    def _calculate_slope_vs_rxy_sig(self, slope_test_sig_raster, rxy_test_sig_raster):
+        """ Calculate slope significance test """
+        slope_sig_ras = Raster(slope_test_sig_raster)
+        rxy_sig_ras = Raster(rxy_test_sig_raster)
+        temp_out_ras = Con(slope_sig_ras == 0, 1, 0) + \
+                       Con((slope_sig_ras == -1) & (rxy_sig_ras == 0), 2, 0) + \
+                       Con((slope_sig_ras == 1) & (rxy_sig_ras == 0), 3, 0) + \
+                       Con((slope_sig_ras == -1) & (rxy_sig_ras == 1), 4, 0) + \
+                       Con((slope_sig_ras == 1) & (rxy_sig_ras == 1), 5, 0)
+        return temp_out_ras
+
+    def _get_type(self, val):
+        """ Get value type as integer """
+        try:
+            int(val)
+            return True
+        except ValueError:
+            return False
+
+    def _get_float(self, val):
+        """ Get value type as float """
+        try:
+            return float(val)
+        except ValueError:
+            return False
+
     def _calculate_z(self, rxy_out_raster):
         """ Calculate z value """
         z_out_raster = self._create_output_file_name('Z_Test_', self.place_name, self.dest_dir, '.tif')
@@ -598,6 +933,7 @@ class TrendCorrelation:
                 arcpy.Delete_management(f)
         else:
             arcpy.Delete_management(del_file)
+
 
 def main():
     """Main program"""
