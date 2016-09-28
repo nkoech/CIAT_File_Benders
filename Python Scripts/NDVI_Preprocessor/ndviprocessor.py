@@ -51,13 +51,17 @@ class NDVIProcessor:
             if self.mosaic_operation or self.max_val_composite:
                 self._init_stitch_rasters(file_path, file_name_date)
             else:
-                self.geoprocess_raster(file_path)
+                clip_out_ras = self.geoprocess_raster(file_path)
+                if arcpy.Exists(clip_out_ras):
+                    arcpy.Delete_management(clip_out_ras)
 
         # Perform basic preprocessing
         if self.mosaic_operation:
             if self.mos_out_ras:
                 for mos_file_path in self.mos_out_ras:
-                    self.geoprocess_raster(mos_file_path)
+                    clip_out_ras = self.geoprocess_raster(mos_file_path)
+                    if arcpy.Exists(clip_out_ras):
+                        arcpy.Delete_management(clip_out_ras)
 
         # Perform cell statistics
         if self.mosaic_operation and self.max_val_composite:
@@ -239,7 +243,7 @@ class NDVIProcessor:
             masked_file = self.place_name + file_name[-53:]
         masked_out_ras = self._raster_setnull(clip_out_ras, masked_file, where_clause_val1, where_clause_val2)
         self.clean_ras.append(masked_out_ras)
-        arcpy.Delete_management(clip_out_ras)
+        return clip_out_ras
 
     def _get_spatial_ref(self, file_path, target_ref=None):
         """ Get raster spatial reference """

@@ -1,21 +1,21 @@
 {
   "src": [
     {
-      "src_dir": "C:/Data/CHIRPS",
-      "dir_param": "Mont",
-      "file_start": "chirps-",
+      "src_dir": "C:/Data/Babati/Unprocessed_CHIRPS",
+      "dir_param": false,
+      "file_start": false,
       "file_end": ".tif.gz"
     }
   ],
   "dest": [
     {
-      "dest_dir": "C:/Data/CHIRPS/Monthly/Output"
+      "dest_dir": "C:/Data/Babati/Processed_CHIRPS"
     }
   ],
   "aoi_geometry": [
     {
-      "aoi_poly": "D:/Data/Data/KEN_Admin/KEN_Ilemi_Admin_Buffer.shp",
-      "aoi_place_name": "KEN"
+      "aoi_poly": "C:/Data/Babati/Boundary/Babati_Buffer.shp",
+      "aoi_place_name": "BBT"
     }
   ],
   "file_settings": [

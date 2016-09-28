@@ -1,7 +1,7 @@
 {
   "src": [
     {
-      "src_dir": "C:/Data/Babati/NDVI_Test/Raw",
+      "src_dir": "C:/Data/Babati/Test/NDVI/Input",
       "dir_param": false,
       "file_start": false,
       "file_end": "_wm2.tif"
@@ -9,20 +9,20 @@
   ],
   "dest": [
     {
-      "dest_dir": "C:/Data/Babati/NDVI_Test/Out"
+      "dest_dir": "C:/Data/Babati/Test/NDVI/Output"
     }
   ],
   "target_reference": [
     {
-      "aoi_boundary": "D:/Data/Data/KEN_Admin/KEN_Ilemi_Admin_Buffer.shp",
-      "aoi_place_name": "KEN",
+      "aoi_boundary": "C:/Data/Babati/Boundary/Babati_Buffer.shp",
+      "aoi_place_name": "BBT",
       "reproject_to": 4326
     }
   ],
   "mosaic_details": [
     {
-      "mosaic_operation": true,
-      "max_value_composite": true
+      "mosaic_operation": false,
+      "max_value_composite": false
     }
   ]
 }

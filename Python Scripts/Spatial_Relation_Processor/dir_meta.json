@@ -1,30 +1,30 @@
 {
   "src_1": [
     {
-      "src_dir_1": "C:/Data/Intermediate_Ouputs",
+      "src_dir_1": "C:/Data/Babati/Processed_NDVI",
       "datatype_in_filename_1": "NDVI",
-      "dir_startswith_1": "NDVI",
-      "file_startswith_1": "MVC.KEN.",
+      "dir_startswith_1": false,
+      "file_startswith_1": false,
       "file_endswith_1": "_wm2.tif"
     }
   ],
   "src_2": [
     {
-      "src_dir_2": "C:/Data/Intermediate_Ouputs",
+      "src_dir_2": "C:/Data/Babati/Processed_CHIRPS",
       "datatype_in_filename_2": "CHIRPS",
-      "dir_startswith_2": "CHIRPS",
-      "file_startswith_2": "KEN_chirps-",
+      "dir_startswith_2": false,
+      "file_startswith_2": false,
       "file_endswith_2": ".tif"
     }
   ],
   "dest": [
     {
-      "dest_dir": "C:/Data/Intermediate_Ouputs/Test"
+      "dest_dir": "C:/Data/Babati/Unclipped_Output"
     }
   ],
   "file_settings": [
     {
-      "aoi_place_name": "KEN",
+      "aoi_place_name": "BBT",
       "resample_method": "nearest",
       "resample_fine": true
     }
@@ -32,9 +32,9 @@
   "significant_test": [
     {
       "slope_critical_val_1": 1.345,
-      "slope_critical_val_2": false,
+      "slope_critical_val_2": 1.761,
       "correlation_critical_val_1": 1.345,
-      "correlation_critical_val_2": false,
+      "correlation_critical_val_2": 1.761,
       "correlation_insignificant_val": 0.45
     }
   ]

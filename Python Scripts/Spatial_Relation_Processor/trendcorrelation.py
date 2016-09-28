@@ -122,7 +122,7 @@ class TrendCorrelation:
             if prev_file_path:
                 prev_spatial_ref = self._get_spatial_ref(prev_file_path)
                 try:
-                    if current_spatial_ref.factoryCode == prev_spatial_ref.factoryCode:
+                    if current_spatial_ref.name == prev_spatial_ref.name:
                         return current_spatial_ref
                     else:
                         raise ValueError("{} has a different spatial reference. Please correct it and run the process again".format(file_path))
