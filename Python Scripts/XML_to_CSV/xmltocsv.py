@@ -7,6 +7,7 @@ from sourcedirectory import get_directory
 from filelocation import get_file_location
 from readjson import get_json_data
 from readxml import get_xml_items
+import csv
 
 
 class XMLtoCSV:
@@ -45,6 +46,13 @@ class XMLtoCSV:
                 # print('{0} ........ {1}'.format(src_dir, file_name))
                 xml_items = get_xml_items(file_path, id_range)
                 csv_values = self._get_csv_values(id_range, xml_items)
+                csv_out_file = src_dir + '/' + file_name[:-3] + 'csv'
+                with open(csv_out_file, 'w') as csv_file:
+                    for k, v in csv_values.items():
+                        values, headers = v
+                        writer = csv.DictWriter(csv_file, headers)
+                        writer.writeheader()
+                        writer.writerow(values)
 
     def _get_identity_range(self):
         """
@@ -64,13 +72,15 @@ class XMLtoCSV:
         """
         csv_values = {}
         for tag_id in id_range:
-            tag_values = []
+            tag_values = {}
             column_headers = []
             for count, xml_item in enumerate(xml_items):
                 if xml_item[0][1] == tag_id:
-                    if xml_item[1][0] not in set(column_headers):
-                        tag_values.append(xml_item[1][1])
-                        column_headers.append(xml_item[1][0])
+                    tag_key = xml_item[1][0]
+                    tag_value = xml_item[1][1]
+                    if tag_key not in set(column_headers):
+                        tag_values[tag_key] = tag_value
+                        column_headers.append(tag_key)
             csv_values[tag_id] = (tag_values, column_headers)
         return csv_values
 
