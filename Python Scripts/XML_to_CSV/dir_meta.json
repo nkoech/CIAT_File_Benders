@@ -1,0 +1,21 @@
+{
+  "src": [
+    {
+      "src_dir": "D:/Junk/Job_Data",
+      "dir_startswith": false,
+      "file_startswith": false,
+      "file_endswith": ".xml"
+    }
+  ],
+  "alphabet_range": [
+    {
+      "char_start": "a",
+      "char_end": "i"
+    }
+  ],
+  "dest": [
+    {
+      "dest_dir": "D:/Junk/Job_Data"
+    }
+  ]
+}
