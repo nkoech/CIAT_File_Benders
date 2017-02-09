@@ -43,14 +43,13 @@ class XMLtoCSV:
         id_range = self._get_identity_range()
         for root_dir in get_directory(self.base_dir, self.base_dir_startswith):
             for src_dir, file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
-                # print('{0} ........ {1}'.format(src_dir, file_name))
                 xml_items = get_xml_items(file_path, id_range)
                 csv_values = self._get_csv_values(id_range, xml_items)
                 csv_out_file = src_dir + '/' + file_name[:-3] + 'csv'
                 with open(csv_out_file, 'w') as csv_file:
                     for k, v in csv_values.items():
                         values, headers = v
-                        writer = csv.DictWriter(csv_file, headers)
+                        writer = csv.DictWriter(csv_file, headers, dialect='excel', lineterminator='\n')
                         writer.writeheader()
                         writer.writerow(values)
 
@@ -83,14 +82,6 @@ class XMLtoCSV:
                         column_headers.append(tag_key)
             csv_values[tag_id] = (tag_values, column_headers)
         return csv_values
-
-
-
-
-
-
-
-
 
 def main():
     """Main program"""
