@@ -76,7 +76,7 @@ class XMLtoCSV:
         csv_values = {}
         for tag_id in id_range:
             tag_values = {}
-            blank_values = {}
+            blank_values = {}  # CSV row separator
             column_headers = []
             for count, xml_item in enumerate(xml_items):
                 if xml_item[0][1] == tag_id:
