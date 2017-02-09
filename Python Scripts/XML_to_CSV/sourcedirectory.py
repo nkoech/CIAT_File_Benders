@@ -8,7 +8,13 @@ import os
 
 
 def get_directory(src, dir_startswith=None):
-    """ Get file root directory """
+    """
+    Get file root directory
+    :param src: Source directory
+    :param dir_startswith: Directory name start characters
+    :return: File directory root path
+    :rtype: String
+    """
     try:
         if src:
             for root_path, dirs, files in os.walk(src):

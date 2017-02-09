@@ -8,7 +8,18 @@ import os
 
 
 def get_file_location(root_dir, file_startswith=None, file_endswith=None):
-    """ Get file location """
+    """
+    Get file location
+    :param root_dir: File root directory
+    :param file_startswith: File name starting characters
+    :param file_endswith: File name ending characters
+    :return root_dir: File root directory
+    :return file_path: Full file path
+    :return file_name: File name
+    :rtype root_dir: String
+    :rtype file_path: String
+    :rtype file_name: String
+    """
     try:
         for file_name in os.listdir(root_dir):
             if file_startswith and file_endswith:
