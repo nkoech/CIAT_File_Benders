@@ -42,16 +42,20 @@ class XMLtoCSV:
         """
         id_range = self._get_identity_range()
         for root_dir in get_directory(self.base_dir, self.base_dir_startswith):
+            print('Identified root directory ..... {0}'.format(root_dir))
             for src_dir, file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
+                print('Processing XML file ..... {0}'.format(file_name))
                 xml_items = get_xml_items(file_path, id_range)
                 csv_values = self._get_csv_values(id_range, xml_items)
                 csv_out_file = src_dir + '/' + file_name[:-3] + 'csv'
                 with open(csv_out_file, 'w') as csv_file:
+                    print('Converting to CSV file ..... {0}'.format(csv_out_file))
                     for k, v in csv_values.items():
-                        values, headers = v
+                        values, headers, blank_values = v
                         writer = csv.DictWriter(csv_file, headers, dialect='excel', lineterminator='\n')
                         writer.writeheader()
                         writer.writerow(values)
+                        writer.writerow(blank_values)
 
     def _get_identity_range(self):
         """
@@ -72,6 +76,7 @@ class XMLtoCSV:
         csv_values = {}
         for tag_id in id_range:
             tag_values = {}
+            blank_values = {}
             column_headers = []
             for count, xml_item in enumerate(xml_items):
                 if xml_item[0][1] == tag_id:
@@ -79,8 +84,9 @@ class XMLtoCSV:
                     tag_value = xml_item[1][1]
                     if tag_key not in set(column_headers):
                         tag_values[tag_key] = tag_value
+                        blank_values[tag_key] = ''
                         column_headers.append(tag_key)
-            csv_values[tag_id] = (tag_values, column_headers)
+            csv_values[tag_id] = (tag_values, column_headers, blank_values)
         return csv_values
 
 def main():
