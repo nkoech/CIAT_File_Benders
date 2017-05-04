@@ -1,0 +1,109 @@
+INSTRUCTIONS ON HOW TO RUN ndviprocessor.py
+============================================
+*** The NDVI Processor MUST be EXECUTED in stages depending on the nature of the datasets available.
+The two steps will be explained below;
+
+STEP 1: Mosaick Settings
++++++++++++++++++++++++++
+
+This step SHOULD ONLY be carried out if data has to be mosaicked/stitched together. If this is not the
+case then PROCEED to STEP 2.
+
+In this step the following parameters should be applied to "dir_meta.json" settings file.
+PAY MORE ATTENTION to the "mosaic_details" section of the settings. "max_value_composite" parameter
+MUST BE set to false on this step.
+
+########################################## MOSAIC SETTINGS ###############################################
+
+    {
+      "src": [
+        {
+          "src_dir": "D:/Data/DIRECTORY_PATH_SOURCE_DATA_TO_BE_MOSAICKED",
+          "dir_param": false,
+          "file_start": false,
+          "file_end": "_wm2.tif"
+        }
+      ],
+      "dest": [
+        {
+          "dest_dir": "D:/Data/DIRECTORY_PATH_MOSAICKED_DATA_OUTPUT"
+        }
+      ],
+      "target_reference": [
+        {
+          "aoi_boundary": "D:/Data/AREA_OF_INTEREST_SHP_FILE",
+          "aoi_place_name": "AFR",
+          "reproject_to": 4326
+        }
+      ],
+      "mosaic_details": [
+        {
+          "mosaic_operation":true,
+          "max_value_composite": false
+        }
+      ]
+    }
+
+########################################## END OF MOSAIC SETTINGS ########################################
+
+*** Note the following;
+    1. DIRECTORY_PATH_MOSAICKED_DATA_OUTPUT should be created outside the DIRECTORY_PATH_SOURCE_DATA_TO_BE_MOSAICKED
+    2. "aoi_boundary" should have an extention .shp
+    3. "aoi_place_name" parameter should be made of only three initials that represents the place name
+
+
+After properly doing MOSAIC SETTINGS run ndviprocessor.py to stitch your datasets
+
+
+
+
+
+STEP 2: Maximum Value Composite (MVC) Settings
++++++++++++++++++++++++++++++++++++++++++++++++
+
+This step assumes that your data has been mosaicked/stitched together or does not require mosaicking.
+Kindly follow STEP 1 procedures before executing this step (STEP 2).
+
+The following parameters should be applied to "dir_meta.json" settings file when calculating MVC.
+PAY MORE ATTENTION to the "mosaic_details" section of the settings. "mosaic_operation" parameter
+MUST BE set to false on this step.
+
+########################################## MVC SETTINGS ##################################################
+
+    {
+      "src": [
+        {
+          "src_dir": "D:/Data/DIRECTORY_PATH_SOURCE_or_MOSAICKED_DATA",
+          "dir_param": false,
+          "file_start": false,
+          "file_end": "_wm2.tif"
+        }
+      ],
+      "dest": [
+        {
+          "dest_dir": "D:/Data/DIRECTORY_PATH_PROCESSED_MVC_DATA_OUTPUT"
+        }
+      ],
+      "target_reference": [
+        {
+          "aoi_boundary": "D:/Data/AREA_OF_INTEREST_SHP_FILE",
+          "aoi_place_name": "AFR",
+          "reproject_to": 4326
+        }
+      ],
+      "mosaic_details": [
+        {
+          "mosaic_operation":false,
+          "max_value_composite": true
+        }
+      ]
+    }
+
+########################################## END OF MVC SETTINGS ###########################################
+
+*** Note the following;
+    1. DIRECTORY_PATH_PROCESSED_MVC_DATA_OUTPUT should be created outside the DIRECTORY_PATH_SOURCE_or_MOSAICKED_DATA
+    2. "aoi_boundary" should have an extention .shp
+    3. "aoi_place_name" parameter should be made of only three initials that represents the place name
+
+After properly doing MVC SETTINGS run ndviprocessor.py to calculate Maximum Value Composite of your datasets

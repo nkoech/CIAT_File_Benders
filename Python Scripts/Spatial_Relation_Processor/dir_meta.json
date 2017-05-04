@@ -1,25 +1,25 @@
 {
   "src_1": [
     {
-      "src_dir_1": "C:/Data/Babati/Processed_NDVI",
+      "src_dir_1": "D:/Data/DIRECTORY_PATH_SOURCE_PROCESSED_NDVI_MVC_DATA",
       "datatype_in_filename_1": "NDVI",
       "dir_startswith_1": false,
-      "file_startswith_1": false,
+      "file_startswith_1": "MVC.ETH",
       "file_endswith_1": "_wm2.tif"
     }
   ],
   "src_2": [
     {
-      "src_dir_2": "C:/Data/Babati/Processed_CHIRPS",
+      "src_dir_2": "D:/Data/DIRECTORY_PATH_SOURCE_PROCESSED_CHIRPS_DATA",
       "datatype_in_filename_2": "CHIRPS",
       "dir_startswith_2": false,
-      "file_startswith_2": false,
+      "file_startswith_2": "ETH_chirps",
       "file_endswith_2": ".tif"
     }
   ],
   "dest": [
     {
-      "dest_dir": "C:/Data/Babati/Unclipped_Output"
+      "dest_dir": "D:/Data/DIRECTORY_PATH_TREND_CORRELATION_DATA_OUTPUT"
     }
   ],
   "file_settings": [

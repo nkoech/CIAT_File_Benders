@@ -1,0 +1,64 @@
+INSTRUCTIONS ON HOW TO RUN trendcorrelation.py
+===============================================
+
+Use the following settings for correlation analysis based on ndviprocessor.py and chirpsprocessor.py outputs
+
+########################################## TREND CORRELATION SETTINGS ####################################
+
+{
+  "src_1": [
+    {
+      "src_dir_1": "D:/Data/DIRECTORY_PATH_SOURCE_PROCESSED_NDVI_MVC_DATA",
+      "datatype_in_filename_1": "NDVI",
+      "dir_startswith_1": false,
+      "file_startswith_1": "MVC.ETH",
+      "file_endswith_1": "_wm2.tif"
+    }
+  ],
+  "src_2": [
+    {
+      "src_dir_2": "D:/Data/DIRECTORY_PATH_SOURCE_PROCESSED_CHIRPS_DATA",
+      "datatype_in_filename_2": "CHIRPS",
+      "dir_startswith_2": false,
+      "file_startswith_2": "ETH_chirps",
+      "file_endswith_2": ".tif"
+    }
+  ],
+  "dest": [
+    {
+      "dest_dir": "D:/Data/DIRECTORY_PATH_TREND_CORRELATION_DATA_OUTPUT"
+    }
+  ],
+  "file_settings": [
+    {
+      "aoi_place_name": "AFR",
+      "resample_method": "nearest",
+      "resample_fine": true
+    }
+  ],
+  "significant_test": [
+    {
+      "slope_critical_val_1": 1.345,
+      "slope_critical_val_2": 1.761,
+      "correlation_critical_val_1": 1.345,
+      "correlation_critical_val_2": 1.761,
+      "correlation_insignificant_val": 0.45
+    }
+  ]
+}
+
+########################################## END OF TREND CORRELATION SETTINGS #############################
+
+*** Note the following;
+    1. DIRECTORY_PATH_TREND_CORRELATION_DATA_OUTPUT should be created outside the data input paths which
+       are DIRECTORY_PATH_SOURCE_PROCESSED_NDVI_MVC_DATA and DIRECTORY_PATH_SOURCE_PROCESSED_CHIRPS_DATA
+    2. "file_startswith" MUST be included. These are the first few letters in a file name that are
+       common at the beginning of all data file names
+    3. "aoi_place_name" parameter should be made of only three initials that represents the place name
+    4. "slope_critical_val" and "correlation_critical" are t-distribution values at 90% and 95% for
+       n degrees of freedom based on the number(n) of years involved minus 2. i.e. df = (n-2)
+    5. "correlation_insignificant_val" this correlation coefficient determinant value that can be
+       expressed as -0.45<R>0.45 or as |R=0.45|
+
+
+After properly doing CHIRPS SETTINGS run chirpsprocessor.py to calculate average annual precipitation

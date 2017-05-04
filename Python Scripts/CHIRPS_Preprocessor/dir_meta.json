@@ -1,7 +1,7 @@
 {
   "src": [
     {
-      "src_dir": "C:/Data/Babati/Unprocessed_CHIRPS",
+      "src_dir": "DIRECTORY_PATH_SOURCE_CHIRPS_DATA",
       "dir_param": false,
       "file_start": false,
       "file_end": ".tif.gz"
@@ -9,13 +9,13 @@
   ],
   "dest": [
     {
-      "dest_dir": "C:/Data/Babati/Processed_CHIRPS"
+      "dest_dir": "D:/Data/DIRECTORY_PATH_PROCESSED_CHIRPS_DATA_OUTPUT"
     }
   ],
   "aoi_geometry": [
     {
-      "aoi_poly": "C:/Data/Babati/Boundary/Babati_Buffer.shp",
-      "aoi_place_name": "BBT"
+      "aoi_poly": "D:/Data/AREA_OF_INTEREST_SHP_FILE",
+      "aoi_place_name": "ETH"
     }
   ],
   "file_settings": [
