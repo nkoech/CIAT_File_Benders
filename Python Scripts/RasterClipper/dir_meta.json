@@ -1,0 +1,29 @@
+{
+  "src": [
+    {
+      "src_dir": "F:/Data/Spatial/Original_State/Climate/Precipitation/Test",
+      "dir_param": false,
+      "file_start": false,
+      "file_end": ".tif.gz"
+    }
+  ],
+  "dest": [
+    {
+      "dest_dir": "D:/Junk/New Folder"
+    }
+  ],
+  "aoi_geometry": [
+    {
+      "aoi_poly": "D:/Data/Requests/Fred/Babati/Suitability_Analysis/Original Data/Boundary/BBT_Sqr_Boundary.shp",
+      "aoi_place_name": "BBT"
+    }
+  ],
+  "file_settings": [
+    {
+      "unzip_file": true,
+      "cal_sum": true,
+      "no_data_value": "-9999",
+      "months": [12, 1, 2, 3, 4, 5, 6, 7]
+    }
+  ]
+}

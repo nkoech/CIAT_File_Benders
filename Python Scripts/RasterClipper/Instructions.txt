@@ -1,0 +1,46 @@
+INSTRUCTIONS ON HOW TO RUN chirpsprocessor.py
+===============================================
+
+Use the following settings to process CHIRPS datasets
+
+########################################## CHIRPS SETTINGS ###############################################
+
+    {
+      "src": [
+        {
+          "src_dir": "D:/Data/DIRECTORY_PATH_SOURCE_CHIRPS_DATA",
+          "dir_param": false,
+          "file_start": false,
+          "file_end": ".tif.gz"
+        }
+      ],
+      "dest": [
+        {
+          "dest_dir": "D:/Data/DIRECTORY_PATH_PROCESSED_CHIRPS_DATA_OUTPUT"
+        }
+      ],
+      "aoi_geometry": [
+        {
+          "aoi_poly": "D:/Data/AREA_OF_INTEREST_SHP_FILE",
+          "aoi_place_name": "AFR"
+        }
+      ],
+      "file_settings": [
+        {
+          "unzip_file": true,
+          "cal_mean": true,
+          "no_data_value": "-9999"
+        }
+      ]
+    }
+
+########################################## END OF CHIRPS SETTINGS ########################################
+
+*** Note the following;
+    1. DIRECTORY_PATH_PROCESSED_CHIRPS_DATA_OUTPUT should be created outside the DIRECTORY_PATH_SOURCE_CHIRPS_DATA
+    2. "aoi_boundary" should have an extention .shp
+    3. "aoi_place_name" parameter should be made of only three initials that represents the place name
+    4. "unzip_file" parameter should be set to true if unzipping is required otherwise use false
+
+
+After properly doing CHIRPS SETTINGS run chirpsprocessor.py to calculate average annual precipitation

@@ -21,7 +21,7 @@
   "file_settings": [
     {
       "unzip_file": true,
-      "cal_mean": true,
+      "cal_sum": true,
       "no_data_value": "-9999"
     }
   ]

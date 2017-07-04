@@ -3,7 +3,6 @@ __copyright__ = "Copyright 2016"
 __email__ = "koechnicholas@gmail.com"
 __status__ = "draft"
 
-
 import arcpy
 from arcpy import env
 from arcpy.sa import *
@@ -15,7 +14,7 @@ from readjson import get_json_data
 from sourcedirectory import get_directory
 
 
-class CHIRPSProcessor:
+class RasterClipper:
     def __init__(self):
         self.tool_settings = self._get_user_parameters()
         self.src = self.tool_settings['src_dir']
@@ -28,6 +27,7 @@ class CHIRPSProcessor:
         self.extract_file = self.tool_settings['unzip_file']
         self.cal_sum = self.tool_settings['cal_sum']
         self.no_data_val = self.tool_settings['no_data_value']
+        self.months = self.tool_settings['months']
 
     def _get_user_parameters(self):
         """Get contents from a Json file"""
@@ -63,9 +63,16 @@ class CHIRPSProcessor:
         """ Uncompress file """
         fname_endswith = '.gz'
         root_dir = get_directory(self.src, self.dir_startswith)
+
         for source_dir, file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
-            print('Extracting..... {0}'.format(file_name))
-            extract_data(source_dir, file_path, file_name, fname_endswith)
+            if self.months:
+                for i in tuple(list(set(self.months))):
+                    if int(file_name[17:19]) == i:
+                        print('Extracting..... {0}'.format(file_name))
+                        extract_data(source_dir, file_path, file_name, fname_endswith)
+            else:
+                print('Extracting..... {0}'.format(file_name))
+                extract_data(source_dir, file_path, file_name, fname_endswith)
         self.file_endswith = '.tif'
 
     def validate_data(self):
@@ -134,7 +141,9 @@ class CHIRPSProcessor:
         """ Clip raster to area of interest """
         root_dir = get_directory(self.src, self.dir_startswith)
         try:
+            print(self.clip_poly)
             if self.clip_poly and self.clip_poly.endswith('.shp') and arcpy.Exists(self.clip_poly):
+                print(self.clip_poly)
                 for source_dir, file_path, file_name in get_file_location(root_dir, self.file_startswith, self.file_endswith):
                     clipped_ras = os.path.join(self.dest_dir, self.place_name + '_' + file_name).replace('\\', '/')
                     print('Clipping..... {0} to {1}'.format(file_name, ntpath.basename(clipped_ras)))
@@ -154,7 +163,7 @@ def main():
     """Main program"""
     env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
-    read_file = CHIRPSProcessor()
+    read_file = RasterClipper()
     read_file.init_geoprocess_raster()
 
 if __name__ == '__main__':
