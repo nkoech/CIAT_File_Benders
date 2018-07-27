@@ -1,7 +1,7 @@
 {
   "src": [
     {
-      "src_dir": "D:/Junk/Test_Data",
+      "src_dir": "D:/Data/Projects/Adoption_Feed_Intervention/Processed_Data/EA_Madagascar_Buffer/DMP",
       "dir_param": false,
       "file_start": false,
       "file_end": ".tif"
@@ -9,7 +9,7 @@
   ],
   "dest": [
     {
-      "dest_dir": "D:/Junk/Test_Output"
+      "dest_dir": "D:/Data/Projects/Adoption_Feed_Intervention/Processed_Data/EA_Madagascar_Buffer/DMP_Long_Term_Average"
     }
   ],
   "file_settings": [
