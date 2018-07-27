@@ -1,0 +1,25 @@
+{
+  "src": [
+    {
+      "src_dir": "D:/Junk/Test_Data",
+      "dir_param": false,
+      "file_start": false,
+      "file_end": ".tif"
+    }
+  ],
+  "dest": [
+    {
+      "dest_dir": "D:/Junk/Test_Output"
+    }
+  ],
+  "file_settings": [
+    {
+      "prefix": [
+        "_2008", "_2009", "_2010", "_2011", "_2012", "_2013", "_2014", "_2015", "_2016", "_2017"
+      ],
+      "suffix": [
+        "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "src": [
     {
-      "src_dir": "F:/Data/Spatial/Original_State/Climate/Precipitation/Test",
+      "src_dir": "F:/Data/Spatial/Original_State/Climate/Precipitation/CHIRPS_V2",
       "dir_param": false,
       "file_start": false,
       "file_end": ".tif.gz"
@@ -9,7 +9,7 @@
   ],
   "dest": [
     {
-      "dest_dir": "D:/Junk/New Folder"
+      "dest_dir": "D:/Data/Requests/Fred/Babati/Suitability_Analysis/Processed_Data/Junk/Precipitation"
     }
   ],
   "aoi_geometry": [

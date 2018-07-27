@@ -1,7 +1,7 @@
 {
   "src": [
     {
-      "src_dir": "DIRECTORY_PATH_SOURCE_CHIRPS_DATA",
+      "src_dir": "F:/Data/Spatial/Original_State/Climate/Precipitation/CHIRPS_Temp",
       "dir_param": false,
       "file_start": false,
       "file_end": ".tif.gz"
@@ -9,13 +9,13 @@
   ],
   "dest": [
     {
-      "dest_dir": "D:/Data/DIRECTORY_PATH_PROCESSED_CHIRPS_DATA_OUTPUT"
+      "dest_dir": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/HT_TY_Original_Data/Precipitation/Wet_Season"
     }
   ],
   "aoi_geometry": [
     {
-      "aoi_poly": "D:/Data/AREA_OF_INTEREST_SHP_FILE",
-      "aoi_place_name": "ETH"
+      "aoi_poly": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/Boundary/HT_TY_Sqr_Boundary.shp",
+      "aoi_place_name": "HTY"
     }
   ],
   "file_settings": [

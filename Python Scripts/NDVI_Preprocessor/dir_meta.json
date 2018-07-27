@@ -1,28 +1,28 @@
 {
   "src": [
     {
-      "src_dir": "D:/Data/DIRECTORY_PATH_SOURCE_DATA_TO_BE_MOSAICKED",
+      "src_dir": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/HTY_Original_Data/NDVI/Processing/Output_Data",
       "dir_param": false,
-      "file_start": "false",
+      "file_start": false,
       "file_end": "_wm2.tif"
     }
   ],
   "dest": [
     {
-      "dest_dir": "D:/Data/DIRECTORY_PATH_MOSAICKED_DATA_OUTPUT"
+      "dest_dir": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/HTY_Original_Data/NDVI/Wet_Season"
     }
   ],
   "target_reference": [
     {
-      "aoi_boundary": "D:/Data/AREA_OF_INTEREST_SHP_FILE",
-      "aoi_place_name": "ETH",
+      "aoi_boundary": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/Boundary/HTY_Sqr_Boundary.shp",
+      "aoi_place_name": "HTY",
       "reproject_to": 4326
     }
   ],
   "mosaic_details": [
     {
-      "mosaic_operation":true,
-      "max_value_composite": false
+      "mosaic_operation":false,
+      "max_value_composite": true
     }
   ]
 }
