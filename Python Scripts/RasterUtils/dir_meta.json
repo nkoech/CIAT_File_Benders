@@ -1,7 +1,7 @@
 {
   "src": [
     {
-      "src_dir": "D:/Data/Projects/Adoption_Feed_Intervention/Processed_Data/EA_Madagascar_Buffer/DMP",
+      "src_dir": "D:/Data/Projects/Adoption_Feed_Intervention/Processed_Data/EA_Madagascar_Buffer/Actual_DMP",
       "dir_param": false,
       "file_start": false,
       "file_end": ".tif"

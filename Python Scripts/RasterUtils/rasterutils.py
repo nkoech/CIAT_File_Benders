@@ -81,10 +81,12 @@ class RasterUtils:
 
     def _get_list(self, lst):
         """ Gets a list from lists of list """
-        if any(isinstance(i, list) for i in lst):
-            for l in lst:
-                yield l
-        yield lst
+        for l in lst:
+            yield l
+        # if any(isinstance(i, list) for i in lst):
+        #     for l in lst:
+        #         yield l
+        # yield lst
 
     def _create_file(self, in_path, out_dir, join_char):
         """ Create new file name """
