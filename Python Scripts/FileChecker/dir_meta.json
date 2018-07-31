@@ -1,0 +1,11 @@
+{
+  "src": [
+    {
+      "src_dir": "D:/CGIAR/Mutua_John_Yumbya_CIAT_Kenya_Missing_DMP",
+      "dest_dir": "D:/Junk",
+      "dir_param": false,
+      "file_start": false,
+      "file_end": ".nc"
+    }
+  ]
+}
