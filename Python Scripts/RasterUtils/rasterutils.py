@@ -1,5 +1,5 @@
 __author__ = "Koech Nicholas"
-__copyright__ = "Copyright 208"
+__copyright__ = "Copyright 2018"
 __email__ = "koechnicholas@gmail.com"
 __status__ = "draft"
 
@@ -10,6 +10,7 @@ from filelocation import get_file_location
 import ntpath
 import os
 import re
+import urllib2
 from readjson import get_json_data
 from sourcedirectory import get_directory
 
