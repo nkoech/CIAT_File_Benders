@@ -1,12 +1,10 @@
 __author__ = "Koech Nicholas"
-__copyright__ = "Copyright 2016"
+__copyright__ = "Copyright 2018"
 __email__ = "koechnicholas@gmail.com"
 __status__ = "draft"
 
 
 import arcpy
-from arcpy import env
-from arcpy.sa import *
 from extractdata import extract_data
 from filelocation import get_file_location
 import ntpath
@@ -155,7 +153,7 @@ class CHIRPSProcessor:
 
 def main():
     """Main program"""
-    env.overwriteOutput = True
+    arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
     read_file = CHIRPSProcessor()
     read_file.init_geoprocess_raster()
