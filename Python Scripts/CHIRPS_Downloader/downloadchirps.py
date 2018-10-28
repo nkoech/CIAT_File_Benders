@@ -85,7 +85,7 @@ class CHIRPSProcessor:
         """ Get raster spatial reference """
         try:
             return arcpy.Describe(file_path).spatialReference
-        except IOError as (e):
+        except IOError as e:
             print(str(e) + ' or is invalid/corrupted. Remove the bad file and run the process again')
 
     def _calculate_sum_raster(self):
