@@ -3,11 +3,11 @@ __copyright__ = "Copyright 2018"
 __email__ = "koechnicholas@gmail.com"
 __status__ = "draft"
 
-
 from contextlib import closing
 from datetime import datetime
 import ftplib
 import os
+import re
 import urlparse
 
 
@@ -59,18 +59,15 @@ def _get_date(ftp_path, years):
     """Get file day, month and year"""
     f_name = ftp_path.rsplit('/', 1)[-1]
     f_name = f_name.split('.')
-    for f in f_name:
-        if _is_int(f):
-            if int(f) in years:
-                idx = f_name.index(f)
-                return f_name[idx:-1]
+    for c, v in enumerate(f_name):
+        if _is_int(v):
+            if int(v) in years:    
+                # FIXME: Return only if dates matches those of the user    
+                return f_name[c:-1]
         else:
-            pass
-
-
-    # year = [y for y in years if str(y) in f_name]
-    # idx = f_name.index(str(year[0]))
-    # return f_name[idx:-1]
+            if re.findall('(19\d{2}|20\d{2})', v):
+                # FIXME: Return only if dates matches those of the user
+                return f_name[c:-1]
 
 def _mirror_ftp_dir(ftp_handle, ftp_path, param):
     """Replicates a directory on an ftp server recursively"""
@@ -84,7 +81,7 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
                 _mirror_ftp_dir(ftp_handle, item, param)
         else:
             years = [datetime.today().year - i for i in xrange(119)]
-            print(_get_date(item, years))
+            _get_date(item, years)
 
 
             # if param['month'] and param['date']:
