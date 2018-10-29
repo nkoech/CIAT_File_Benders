@@ -50,6 +50,8 @@ class CHIRPSProcessor:
 
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
+        self.region = self._lower_case(self.region)
+        self.product = self._lower_case(self.product)
         self._make_parent_dir(self.dest_dir)  # Make parent directory 
         ftp_params = {'base_url': self.base_url, 'region': self.region, 'product': self.product, 'year': self.year,
                       'month': self.month, 'date': self.date, 'extension': self.extension, 'dest': self.dest_dir}
@@ -73,6 +75,17 @@ class CHIRPSProcessor:
         # else:
         #     self._clip_raster(self.no_data_val)  # Clip raster
         # print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
+    
+    def _lower_case (self, item):
+        """Convert string to lower case"""
+        if item:
+            if isinstance(item, list):
+                lower_items = []
+                for i in item:
+                    lower_items.append(i.lower())
+                return lower_items
+            else:
+                return item.lower()
     
     def _make_parent_dir(self, fpath):
         """Creates parent directory if it does not exist"""

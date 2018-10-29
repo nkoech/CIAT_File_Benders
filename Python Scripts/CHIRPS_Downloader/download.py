@@ -5,6 +5,7 @@ __status__ = "draft"
 
 
 from contextlib import closing
+from datetime import datetime
 import ftplib
 import os
 import urlparse
@@ -32,36 +33,44 @@ def _is_int (str):
     except ValueError:
         return False
 
-def _get_item(item, ftp_path):
-    """Get item in ftp link"""
-    ftp_parts = ftp_path.split('/')
-    for i in item:
-        if str(i) in ftp_parts:
-            return i  
+def _set_path(ftp_path, param):
+    """Create local paths"""
+    ftp_items = ftp_path.split('/')
+    region = param['region'] + '_'
+    product = [region + i for i in param['product'] if region + i in ftp_items]
+    idx = ftp_items.index(product[0])
+    dir_items = ftp_items[idx:-1]
+    return os.path.join(param['dest'], '/'.join(dir_items)).replace('\\', '/') 
 
 def _download_ftp_file(ftp_handle, ftp_path, param):
     """Download a single file from FTP server """ 
-    items = ftp_path.split('/')
-    i = items.index(param['region'] + '_' + param['product'])
-    dest = os.path.join(param['dest'], ','.join(items[i:-1]))
-    print(dest)
-    # product = _get_item([param['region'] + '_' + param['product']], ftp_path)
-    # if param['year']:
-    #     year = _get_item(param['year'], ftp_path)
-    #     dest = os.path.join(param['dest'], product, year)
-    # else:
-    #     dest = os.path.join(param['dest'], product)
-    
-                
-    # if not os.path.exists(dest):
-    #     try:
-    #         with open(dest, 'wb') as f:
-    #             ftp_handle.retrbinary("RETR {0}".format(ftp_path), f.write)
-    #         print("downloaded: {0}".format(dest))
-    #     except FileNotFoundError:
-    #         print("FAILED: {0}".format(dest))
-    # else:
-    #     print("already exists: {0}".format(dest))
+    dest = _set_path(ftp_path, param)              
+    if not os.path.exists(dest):
+        try:
+            with open(dest, 'wb') as f:
+                ftp_handle.retrbinary("RETR {0}".format(ftp_path), f.write)
+            print("downloaded: {0}".format(dest))
+        except FileNotFoundError:
+            print("FAILED: {0}".format(dest))
+    else:
+        print("already exists: {0}".format(dest))
+
+def _get_date(ftp_path, years):
+    """Get file day, month and year"""
+    f_name = ftp_path.rsplit('/', 1)[-1]
+    f_name = f_name.split('.')
+    for f in f_name:
+        if _is_int(f):
+            if int(f) in years:
+                idx = f_name.index(f)
+                return f_name[idx:-1]
+        else:
+            pass
+
+
+    # year = [y for y in years if str(y) in f_name]
+    # idx = f_name.index(str(year[0]))
+    # return f_name[idx:-1]
 
 def _mirror_ftp_dir(ftp_handle, ftp_path, param):
     """Replicates a directory on an ftp server recursively"""
@@ -74,7 +83,16 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
             else:
                 _mirror_ftp_dir(ftp_handle, item, param)
         else:
-            _download_ftp_file(ftp_handle, item, param)
+            years = [datetime.today().year - i for i in xrange(119)]
+            print(_get_date(item, years))
+
+
+            # if param['month'] and param['date']:
+            #     _download_ftp_file(ftp_handle, item, param)
+            # else if param['month'] or  param['date']:
+            #     pass
+            # else:
+            #     _download_ftp_file(ftp_handle, item, param)
 
 def _download_ftp_tree(ftp_url, param):
     """List and download files"""
@@ -90,14 +108,14 @@ def ftp_download(param):
     """Download data from FTP URL"""
     base_url = param['base_url'].strip('/') + '/'
     if param['region']:
-        region_url = urlparse.urljoin(base_url, param['region'].strip('/').lower())
+        region_url = urlparse.urljoin(base_url, param['region'].strip('/'))
         if param['product']:
             for i in param['product']:
                 if i == 'daily':
-                    product_url = urlparse.urljoin(region_url + '_' + i.lower() + '/', 'tifs/p05/')
+                    product_url = urlparse.urljoin(region_url + '_' + i + '/', 'tifs/p05/')
                     _download_ftp_tree(product_url, param)
                 else:
-                    product_url = urlparse.urljoin(region_url + '_' + i.lower() + '/', 'tifs/') 
+                    product_url = urlparse.urljoin(region_url + '_' + i + '/', 'tifs/') 
                     _download_ftp_tree(product_url, param)
         else:
             product_url = urlparse.urljoin(region_url + '_daily/', 'tifs/p05/')  # Daily product used as default
