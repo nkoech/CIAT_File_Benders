@@ -62,11 +62,11 @@ def _get_date(ftp_path, years):
     for c, v in enumerate(f_name):
         if _is_int(v):
             if int(v) in years:    
-                # FIXME: Return only if dates matches those of the user    
+                # FIXME: Return year, month and date    
                 return f_name[c:-1]
         else:
             if re.findall('(19\d{2}|20\d{2})', v):
-                # FIXME: Return only if dates matches those of the user
+                # FIXME: Return year, month and date 
                 return f_name[c:-1]
 
 def _mirror_ftp_dir(ftp_handle, ftp_path, param):
