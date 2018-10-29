@@ -1,12 +1,13 @@
 {
   "ftp": [
     {
-      "ftp_url": "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/",
+      "base_url": "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/",
       "region": "Africa",
-      "duration": "daily",
+      "product": ["daily", "monthly"],
       "year": [1981, 1995, 2015],
       "month": [1, 2, 6, 10, 11, 12],
-      "date": [3, 8, 15, 17, 23, 27, 31]
+      "date": [3, 8, 15, 17, 23, 27, 31],
+      "extension": ".gz"
     }
   ],
   "src": [
@@ -19,7 +20,7 @@
   ],
   "dest": [
     {
-      "dest_dir": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/HT_TY_Original_Data/Precipitation/Wet_Season"
+      "dest_dir": "D:/Junk/CHIRPS"
     }
   ],
   "aoi_geometry": [

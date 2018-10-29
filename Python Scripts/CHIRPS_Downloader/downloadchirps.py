@@ -4,20 +4,28 @@ __email__ = "koechnicholas@gmail.com"
 __status__ = "draft"
 
 
-import arcpy
+# import arcpy
 from extractdata import extract_data
+from download import ftp_download
 from filelocation import get_file_location
 import ntpath
 import os
 from readjson import get_json_data
 from sourcedirectory import get_directory
-import urllib2
 
 
 class CHIRPSProcessor:
     def __init__(self):
         self.tool_settings = self._get_user_parameters()
-        self.ftp_url = self.tool_settings['ftp_url']
+
+        self.base_url = self.tool_settings['base_url']
+        self.region = self.tool_settings['region']
+        self.product = self.tool_settings['product']
+        self.year = self.tool_settings['year']
+        self.month = self.tool_settings['month']
+        self.date = self.tool_settings['date']
+        self.extension = self.tool_settings['extension']
+
         self.src = self.tool_settings['src_dir']
         self.dest_dir = self.tool_settings['dest_dir']
         self.dir_startswith = self.tool_settings['dir_param']
@@ -33,6 +41,7 @@ class CHIRPSProcessor:
         """Get contents from a Json file"""
         tool_settings = {}
         data = get_json_data('dir_meta', '.json')
+
         for i in data:
             for j in data[i]:
                 if isinstance(j, dict):
@@ -41,24 +50,39 @@ class CHIRPSProcessor:
 
     def init_geoprocess_raster(self):
         """ Initialize raster geoprocessing """
+        self._make_parent_dir(self.dest_dir)  # Make parent directory 
+        ftp_params = {'base_url': self.base_url, 'region': self.region, 'product': self.product, 'year': self.year,
+                      'month': self.month, 'date': self.date, 'extension': self.extension, 'dest': self.dest_dir}
+        ftp_download(ftp_params)
 
-        if self.extract_file:
-            self._uncompress_file()  # Extract file
 
-        self.validate_data()  # Validated raster
+        # if self.extract_file:
+        #     self._uncompress_file()  # Extract file
 
-        if not os.path.exists(self.dest_dir):
-            os.makedirs(self.dest_dir)  # Create destination folder
+        # self.validate_data()  # Validated raster
 
-        if not int(self.no_data_val):
-            self.no_data_val = ''  # Assign NoData value to none
+        # if not os.path.exists(self.dest_dir):
+        #     os.makedirs(self.dest_dir)  # Create destination folder
 
-        if self.cal_sum:
-            self._calculate_sum_raster()  # Add all rasters
-            self._clip_raster(self.no_data_val)  # Clip raster
-        else:
-            self._clip_raster(self.no_data_val)  # Clip raster
-        print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
+        # if not int(self.no_data_val):
+        #     self.no_data_val = ''  # Assign NoData value to none
+
+        # if self.cal_sum:
+        #     self._calculate_sum_raster()  # Add all rasters
+        #     self._clip_raster(self.no_data_val)  # Clip raster
+        # else:
+        #     self._clip_raster(self.no_data_val)  # Clip raster
+        # print('RASTER PROCESSING COMPLETED SUCCESSFULLY!!!')
+    
+    def _make_parent_dir(self, fpath):
+        """Creates parent directory if it does not exist"""
+        dir_name = fpath
+        while not os.path.exists(dir_name):
+            try:
+                os.makedirs(dir_name)
+                print("Created... {0}".format(dir_name))
+            except:
+                self._make_parent_dir(dir_name)
 
     def _uncompress_file(self):
         """ Uncompress file """
@@ -153,8 +177,8 @@ class CHIRPSProcessor:
 
 def main():
     """Main program"""
-    arcpy.env.overwriteOutput = True
-    arcpy.CheckOutExtension("spatial")
+    # arcpy.env.overwriteOutput = True
+    # arcpy.CheckOutExtension("spatial")
     read_file = CHIRPSProcessor()
     read_file.init_geoprocess_raster()
 
