@@ -130,9 +130,25 @@ def _download_ftp_tree(ftp_url, param):
         except ftplib.all_errors as e:
             print('FTP error:', e)
 
+def _generate_list(param):
+    """Generate integer values from range of values"""
+    keys = ['year', 'month', 'date']
+    for k in keys:
+        if param[k]:
+            invalid = []
+            for c, v in enumerate(param[k]):
+                if not _is_int(v):
+                    invalid.append(v)
+                    boundary_vals = map(int, v.split('-'))
+                    items=list(range(min(boundary_vals), max(boundary_vals) + 1))
+                    param[k].extend(items)            
+            for i in invalid:
+                param[k].remove(i)
+
 def ftp_download(param):
     """Download data from FTP URL"""
     base_url = param['base_url'].strip('/') + '/'
+    _generate_list(param)
     if param['region']:
         region_url = urlparse.urljoin(base_url, param['region'].strip('/'))
         if param['product']:
