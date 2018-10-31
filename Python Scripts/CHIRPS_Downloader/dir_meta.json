@@ -5,8 +5,8 @@
       "region": "global",
       "product": ["daily", "annual"],
       "year": [1981, 1995, 2015],
-      "month": [1, 2, 6, 10, 11, 12],
-      "date": [3, 8, 15, 17, 23, 27, 31],
+      "month": [1],
+      "date": [3, 8, 15],
       "extension": ".gz"
     }
   ],

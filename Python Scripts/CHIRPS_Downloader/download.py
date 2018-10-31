@@ -19,8 +19,8 @@ def _is_item_dir(ftp_handle, item, param):
                 return False
     original_cwd = ftp_handle.pwd()
     try:
-        ftp_handle.cwd(item)
-        ftp_handle.cwd(original_cwd)
+        ftp_handle.cwd(item)  # Try to change to the new directory
+        ftp_handle.cwd(original_cwd)  # Set cwd to the original working directory
         return True
     except:
         return False
@@ -44,30 +44,46 @@ def _set_path(ftp_path, param):
 
 def _download_ftp_file(ftp_handle, ftp_path, param):
     """Download a single file from FTP server """ 
-    dest = _set_path(ftp_path, param)              
-    if not os.path.exists(dest):
-        try:
-            with open(dest, 'wb') as f:
-                ftp_handle.retrbinary("RETR {0}".format(ftp_path), f.write)
-            print("downloaded: {0}".format(dest))
-        except FileNotFoundError:
-            print("FAILED: {0}".format(dest))
+    dest = _set_path(ftp_path, param)   
+    print(dest)           
+    # if not os.path.exists(dest):
+    #     try:
+    #         with open(dest, 'wb') as f:
+    #             ftp_handle.retrbinary("RETR {0}".format(ftp_path), f.write)
+    #         print("downloaded: {0}".format(dest))
+    #     except FileNotFoundError:
+    #         print("FAILED: {0}".format(dest))
+    # else:
+    #     print("already exists: {0}".format(dest))
+
+
+def _format_date(raw_date):
+    """Format date into year, month and day"""
+    date = []
+    for c, v in enumerate(raw_date):
+        if c > 0 and len(v) >= 3:
+            for i in range(0, len(v), 2):
+                date.append(v[i:i + 2])
+        else:
+            date.append(v)
+    ln = len(date)
+    if ln == 3:
+        return {'y': int(date[0]), 'm': int(date[1]), 'd': int(date[2])}
+    elif ln == 2:
+        return {'y': int(date[0]), 'm': int(date[1])}
     else:
-        print("already exists: {0}".format(dest))
+        return {'y': int(date[0])}
+
 
 def _get_date(ftp_path, years):
-    """Get file day, month and year"""
+    """Get file date as digits"""
     f_name = ftp_path.rsplit('/', 1)[-1]
     f_name = f_name.split('.')
     for c, v in enumerate(f_name):
         if _is_int(v):
-            if int(v) in years:    
-                # FIXME: Return year, month and date    
-                return f_name[c:-1]
-        else:
-            if re.findall('(19\d{2}|20\d{2})', v):
-                # FIXME: Return year, month and date 
-                return f_name[c:-1]
+            if int(v) in years:
+                raw_date = [i for i in f_name[c:] if _is_int(i)]
+                return _format_date(raw_date)
 
 def _mirror_ftp_dir(ftp_handle, ftp_path, param):
     """Replicates a directory on an ftp server recursively"""
@@ -80,16 +96,16 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
             else:
                 _mirror_ftp_dir(ftp_handle, item, param)
         else:
-            years = [datetime.today().year - i for i in xrange(119)]
-            _get_date(item, years)
-
-
-            # if param['month'] and param['date']:
-            #     _download_ftp_file(ftp_handle, item, param)
-            # else if param['month'] or  param['date']:
-            #     pass
-            # else:
-            #     _download_ftp_file(ftp_handle, item, param)
+            years = [datetime.today().year - i for i in xrange(49)]
+            date = _get_date(item, years)
+            year, month, day = param['year'], param['month'], param['date']
+            if date:
+                if len(date) == 3 and date['y'] in year and date['m'] in month and date['d'] in day:
+                    _download_ftp_file(ftp_handle, item, param)
+                elif len(date) == 2 and date['y'] in year and date['m'] in month:
+                    _download_ftp_file(ftp_handle, item, param)
+                elif len(date) == 1 and date['y'] in year:
+                    _download_ftp_file(ftp_handle, item, param)
 
 def _download_ftp_tree(ftp_url, param):
     """List and download files"""
