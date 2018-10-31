@@ -1,0 +1,40 @@
+{
+  "ftp": [
+    {
+      "base_url": "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/",
+      "region": "global",
+      "product": ["daily"],
+      "year": [],
+      "month": [],
+      "date": [],
+      "extension": ".gz",
+      "download_dir": "D:/Junk/CHIRPS_Downloads"
+    }
+  ],
+  "src": [
+    {
+      "src_dir": "F:/Data/Spatial/Original_State/Climate/Precipitation/CHIRPS_Temp",
+      "dir_param": false,
+      "file_start": false,
+      "file_end": ".tif.gz"
+    }
+  ],
+  "dest": [
+    {
+      "dest_dir": "D:/Junk/CHIRPS_Downloads"
+    }
+  ],
+  "aoi_geometry": [
+    {
+      "aoi_poly": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/Boundary/HT_TY_Sqr_Boundary.shp",
+      "aoi_place_name": "HTY"
+    }
+  ],
+  "file_settings": [
+    {
+      "unzip_file": true,
+      "cal_sum": true,
+      "no_data_value": "-9999"
+    }
+  ]
+}
