@@ -39,22 +39,33 @@ def _set_path(ftp_path, param):
     region = param['region'] + '_'
     product = [region + i for i in param['product'] if region + i in ftp_items]
     idx = ftp_items.index(product[0])
-    dir_items = ftp_items[idx:-1]
-    return os.path.join(param['dest'], '/'.join(dir_items)).replace('\\', '/') 
+    dest_dir = os.path.join(param['dest'], '/'.join(ftp_items[idx:-1])).replace('\\', '/')
+    dest_file = os.path.join(param['dest'], '/'.join(ftp_items[idx:])).replace('\\', '/')
+    return dest_dir, dest_file
+
+def _make_parent_dir(fpath):
+    """Creates parent directory if it does not exist"""
+    dir_name = fpath
+    while not os.path.exists(dir_name):
+        try:
+            os.makedirs(dir_name)
+            print("Created: {0}".format(dir_name))
+        except:
+            self._make_parent_dir(dir_name)
 
 def _download_ftp_file(ftp_handle, ftp_path, param):
     """Download a single file from FTP server """ 
-    dest = _set_path(ftp_path, param)   
-    print(dest)           
-    # if not os.path.exists(dest):
-    #     try:
-    #         with open(dest, 'wb') as f:
-    #             ftp_handle.retrbinary("RETR {0}".format(ftp_path), f.write)
-    #         print("downloaded: {0}".format(dest))
-    #     except FileNotFoundError:
-    #         print("FAILED: {0}".format(dest))
-    # else:
-    #     print("already exists: {0}".format(dest))
+    dest_dir, dest_file = _set_path(ftp_path, param)  
+    _make_parent_dir(dest_dir) 
+    if not os.path.exists(dest_file):
+        try:
+            with open(dest_file, 'wb') as f:
+                ftp_handle.retrbinary("RETR {0}".format(ftp_path), f.write)
+            print("Downloaded: {0}".format(dest_file))
+        except IOError:
+            print("FAILED: {0}".format(dest_file))
+    else:
+        print("already exists: {0}".format(dest_file))
 
 
 def _format_date(raw_date):
@@ -96,8 +107,8 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
             else:
                 _mirror_ftp_dir(ftp_handle, item, param)
         else:
-            years = [datetime.today().year - i for i in xrange(49)]
-            date = _get_date(item, years)
+            num_years = [datetime.today().year - i for i in xrange(49)]
+            date = _get_date(item, num_years)
             year, month, day = param['year'], param['month'], param['date']
             if date:
                 if len(date) == 3 and date['y'] in year and date['m'] in month and date['d'] in day:
@@ -124,16 +135,16 @@ def ftp_download(param):
         region_url = urlparse.urljoin(base_url, param['region'].strip('/'))
         if param['product']:
             for i in param['product']:
+                url = region_url + '_' + i + '/'
                 if i == 'daily':
-                    product_url = urlparse.urljoin(region_url + '_' + i + '/', 'tifs/p05/')
-                    _download_ftp_tree(product_url, param)
+                    product_url = urlparse.urljoin(url, 'tifs/p05/')                    
                 else:
-                    product_url = urlparse.urljoin(region_url + '_' + i + '/', 'tifs/') 
-                    _download_ftp_tree(product_url, param)
+                    product_url = urlparse.urljoin(url, 'tifs/')
+                _download_ftp_tree(product_url, param)
         else:
             product_url = urlparse.urljoin(region_url + '_daily/', 'tifs/p05/')  # Daily product used as default
             param['product'] = 'daily'
             _download_ftp_tree(product_url, param)
             
     else:
-        print('Region is not set. Please include it in .json file.')
+        print('Region is not set. Please include it in the .json file.')

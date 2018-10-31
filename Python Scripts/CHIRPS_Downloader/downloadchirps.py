@@ -25,9 +25,9 @@ class CHIRPSProcessor:
         self.month = self.tool_settings['month']
         self.date = self.tool_settings['date']
         self.extension = self.tool_settings['extension']
+        self.dest_dir = self.tool_settings['dest_dir']
 
         self.src = self.tool_settings['src_dir']
-        self.dest_dir = self.tool_settings['dest_dir']
         self.dir_startswith = self.tool_settings['dir_param']
         self.file_startswith = self.tool_settings['file_start']
         self.file_endswith = self.tool_settings['file_end']
@@ -52,7 +52,6 @@ class CHIRPSProcessor:
         """ Initialize raster geoprocessing """
         self.region = self._lower_case(self.region)
         self.product = self._lower_case(self.product)
-        self._make_parent_dir(self.dest_dir)  # Make parent directory 
         ftp_params = {'base_url': self.base_url, 'region': self.region, 'product': self.product, 'year': self.year,
                       'month': self.month, 'date': self.date, 'extension': self.extension, 'dest': self.dest_dir}
         ftp_download(ftp_params)
@@ -86,16 +85,6 @@ class CHIRPSProcessor:
                 return lower_items
             else:
                 return item.lower()
-    
-    def _make_parent_dir(self, fpath):
-        """Creates parent directory if it does not exist"""
-        dir_name = fpath
-        while not os.path.exists(dir_name):
-            try:
-                os.makedirs(dir_name)
-                print("Created... {0}".format(dir_name))
-            except:
-                self._make_parent_dir(dir_name)
 
     def _uncompress_file(self):
         """ Uncompress file """
