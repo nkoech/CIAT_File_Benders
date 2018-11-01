@@ -8,7 +8,9 @@ from datetime import datetime
 import ftplib
 import os
 import re
+import sys
 import urlparse
+
 
 
 def _is_item_dir(ftp_handle, item, param):
@@ -51,7 +53,7 @@ def _make_parent_dir(fpath):
             os.makedirs(dir_name)
             print("Created: {0}".format(dir_name))
         except:
-            self._make_parent_dir(dir_name)
+            _make_parent_dir(dir_name)
 
 def _download_ftp_file(ftp_handle, ftp_path, param):
     """Download a single file from FTP server """ 
@@ -135,11 +137,11 @@ def _generate_list(param):
     keys = ['year', 'month', 'date']
     for k in keys:
         if param[k]:
-            for lst in list(param[k]):  # Copy original list for removal on iteration
-                if not _is_int(lst):
-                     boundary_vals = map(int, lst.split('-'))
-                     param[k].remove(lst)
-                     param[k].extend(list(range(min(boundary_vals), max(boundary_vals) + 1)))
+            for lst in list(param[k]):  # Copy original list for removal on iteration                
+                if not _is_int(lst):                    
+                    boundary_vals = map(int, lst.split('-'))
+                    param[k].remove(lst)
+                    param[k].extend(list(range(min(boundary_vals), max(boundary_vals) + 1)))
 
 def ftp_download(param):
     """Download data from FTP URL"""
