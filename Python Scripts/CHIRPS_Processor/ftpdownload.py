@@ -81,11 +81,11 @@ def _format_date(raw_date):
             date.append(v)
     ln = len(date)
     if ln == 3:
-        return {'y': int(date[0]), 'm': int(date[1]), 'd': int(date[2])}
+        return {'year': int(date[0]), 'month': int(date[1]), 'date': int(date[2])}
     elif ln == 2:
-        return {'y': int(date[0]), 'm': int(date[1])}
+        return {'year': int(date[0]), 'month': int(date[1])}
     else:
-        return {'y': int(date[0])}
+        return {'year': int(date[0])}
 
 
 def _get_date(ftp_path, years):
@@ -112,15 +112,36 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
             num_years = [datetime.today().year - i for i in xrange(49)]
             date = _get_date(item, num_years)
             year, month, day = param['year'], param['month'], param['date']
-            if date:
-                if len(date) == 3 and date['y'] in year and date['m'] in month and date['d'] in day:
-                    _download_ftp_file(ftp_handle, item, param)
-                elif len(date) == 2 and date['y'] in year and date['m'] in month:
-                    _download_ftp_file(ftp_handle, item, param)
-                elif len(date) == 1 and date['y'] in year:
-                    _download_ftp_file(ftp_handle, item, param)
-                else:
-                    _download_ftp_file(ftp_handle, item, param)
+            
+
+            param_keys = sorted([k for k, v in param.items() if v and k in ('year', 'month', 'date')], reverse=True)
+            if param_keys and date:
+                matched_keys = sorted([k for k in date.keys() if param[k] and date[k] in param[k]], reverse = True)
+                if len(param_keys) == 3 and len(date) == len(matched_keys):                  
+                    print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+                    # print(item)
+                elif len(param_keys) == 2 and ((len(date) == 3 and len(matched_keys) == 2) or (len(date) == 2 and len(matched_keys) == 2)or (len(date) == 1 and len(matched_keys) == 1)):
+                    print('bbbbbbbbbbbbbbbbbbbbbbbbbbbbb')
+                    # print(item)
+                elif len(param_keys) == 1 and ((len(date) == 3 and len(matched_keys) == 1) or (len(date) == 2 and len(matched_keys) == 1)or (len(date) == 1 and len(matched_keys) == 1)):
+                    # print(item)
+                    print('ccccccccccccccccccccccccccccccc')
+                
+                
+            
+            # if date:
+            #     if len(date) == 3 and date['y'] in year and date['m'] in month and date['d'] in day:
+            #         pass
+            #         # _download_ftp_file(ftp_handle, item, param)
+            #     elif len(date) == 2 and date['y'] in year and date['m'] in month:
+            #         pass
+            #         # _download_ftp_file(ftp_handle, item, param)
+            #     elif len(date) == 1 and date['y'] in year:
+            #         pass
+            #         # _download_ftp_file(ftp_handle, item, param)
+            #     else:
+            #         pass
+            #         # _download_ftp_file(ftp_handle, item, param)
 
 def _download_ftp_tree(ftp_url, param):
     """List and download files"""
