@@ -5,8 +5,8 @@
       "region": "africa",
       "product": ["daily"],
       "year": [1990],
-      "month": [11],
-      "date": ["24-30"],
+      "month": [1,2,"11-13"],
+      "date": [4,5, "23-28"],
       "extension": ".gz",
       "download_dir": "C:/CHIRPS_Downloads"
     }
