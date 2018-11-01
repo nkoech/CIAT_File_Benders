@@ -135,15 +135,11 @@ def _generate_list(param):
     keys = ['year', 'month', 'date']
     for k in keys:
         if param[k]:
-            invalid = []
-            for c, v in enumerate(param[k]):
-                if not _is_int(v):
-                    invalid.append(v)
-                    boundary_vals = map(int, v.split('-'))
-                    items=list(range(min(boundary_vals), max(boundary_vals) + 1))
-                    param[k].extend(items)            
-            for i in invalid:
-                param[k].remove(i)
+            for lst in list(param[k]):  # Copy original list for removal on iteration
+                if not _is_int(lst):
+                     boundary_vals = map(int, lst.split('-'))
+                     param[k].remove(lst)
+                     param[k].extend(list(range(min(boundary_vals), max(boundary_vals) + 1)))
 
 def ftp_download(param):
     """Download data from FTP URL"""

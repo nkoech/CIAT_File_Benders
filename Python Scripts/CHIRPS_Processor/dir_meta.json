@@ -4,9 +4,9 @@
       "base_url": "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/",
       "region": "africa",
       "product": ["daily"],
-      "year": ["1986-2015"],
-      "month": [],
-      "date": [],
+      "year": [1985],
+      "month": [6],
+      "date": ["16-30"],
       "extension": ".gz",
       "download_dir": "C:/CHIRPS_Downloads"
     }

@@ -42,7 +42,6 @@ class ProcessCHIRPS:
         """Get contents from a Json file"""
         tool_settings = {}
         data = get_json_data('dir_meta', '.json')
-
         for i in data:
             for j in data[i]:
                 if isinstance(j, dict):
