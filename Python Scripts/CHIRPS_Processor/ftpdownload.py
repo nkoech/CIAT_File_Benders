@@ -12,7 +12,6 @@ import sys
 import urlparse
 
 
-
 def _is_item_dir(ftp_handle, item, param):
     """Checks if an item is directory or file"""
     if param['extension']:
@@ -69,24 +68,22 @@ def _download_ftp_file(ftp_handle, ftp_path, param):
     else:
         print("already exists: {0}".format(dest_file))
 
-
 def _format_date(raw_date):
     """Format date into year, month and day"""
     date = []
     for c, v in enumerate(raw_date):
         if c > 0 and len(v) >= 3:
             for i in range(0, len(v), 2):
-                date.append(v[i:i + 2])
+                date.append(int(v[i:i + 2]))
         else:
-            date.append(v)
+            date.append(int(v))
     ln = len(date)
     if ln == 3:
-        return {'year': int(date[0]), 'month': int(date[1]), 'date': int(date[2])}
+        return {'year': date[0], 'month': date[1], 'date': date[2]}
     elif ln == 2:
-        return {'year': int(date[0]), 'month': int(date[1])}
+        return {'year': date[0], 'month': date[1]}
     else:
-        return {'year': int(date[0])}
-
+        return {'year': date[0]}
 
 def _get_date(ftp_path, years):
     """Get file date as digits"""
@@ -97,6 +94,19 @@ def _get_date(ftp_path, years):
             if int(v) in years:
                 raw_date = [i for i in f_name[c:] if _is_int(i)]
                 return _format_date(raw_date)
+
+def _filter_ftp_file(ftp_handle, ftp_path, param):
+    """ Get valid file and download """
+    num_years = [datetime.today().year - i for i in xrange(49)]  # number of years to be compared with
+    date = _get_date(ftp_path, num_years)  # get file date
+    param_keys = [k for k, v in param.items() if v and k in ('year', 'month', 'date')]  # user dates with values            
+    if param_keys and date:
+        param_date_keys = [k for k in param_keys if k in date.keys()]
+        matched_keys = [k for k, v in date.items() if k in param_keys and v in param[k]]  # Matched keys
+        if len(param_keys) >= len(date) and len(date) == len(matched_keys):
+            _download_ftp_file(ftp_handle, ftp_path, param)
+        elif len(date) > len(param_keys) and len(param_date_keys) == len(matched_keys):
+            _download_ftp_file(ftp_handle, ftp_path, param)
 
 def _mirror_ftp_dir(ftp_handle, ftp_path, param):
     """Replicates a directory on an ftp server recursively"""
@@ -109,19 +119,9 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
             else:
                 _mirror_ftp_dir(ftp_handle, item, param)
         else:
-            num_years = [datetime.today().year - i for i in xrange(49)]
-            date = _get_date(item, num_years)
-            param_keys = sorted([k for k, v in param.items() if v and k in ('year', 'month', 'date')], reverse=True)  # Available param keys            
-            if param_keys and date:
-                param_date_keys = [k for k in param_keys if k in date.keys()]
-                matched_keys = sorted([k for k, v in date.items() if k in param_keys and v in param[k]], reverse = True)  # Matched keys
-                if len(param_keys) >= len(date) and len(date) == len(matched_keys):
-                    print("{}".format(date.values()))
-                    # _download_ftp_file(ftp_handle, item, param)
-                elif len(date) > len(param_keys) and len(param_date_keys) == len(matched_keys):
-                    print("{}".format(date.values()))
-                    # _download_ftp_file(ftp_handle, item, param)
-
+            _filter_ftp_file(ftp_handle, item, param)  # get valid file and download
+            # num_years = [datetime.today().year - i for i in xrange(49)]  # number of years to be compared with
+            # date = _get_date(item, num_years)  # get file date
 
 def _download_ftp_tree(ftp_url, param):
     """List and download files"""
@@ -137,7 +137,7 @@ def _generate_list(param):
     """Generate integer values from range of values"""
     keys = ['year', 'month', 'date']
     for k in keys:
-        if param[k]:
+        if k in param.keys() and param[k]:
             for lst in list(param[k]):  # Copy original list for removal on iteration                
                 if not _is_int(lst):                   
                     boundary_vals = map(int, lst.split('-'))
@@ -145,7 +145,7 @@ def _generate_list(param):
                     param[k].extend(list(range(min(boundary_vals), max(boundary_vals) + 1)))
 
 def ftp_download(param):
-    """Download data from FTP URL"""
+    """ Set the right product URL and downlaod """
     base_url = param['base_url'].strip('/') + '/'
     _generate_list(param)
     if param['region']:
@@ -161,7 +161,6 @@ def ftp_download(param):
         else:
             product_url = urlparse.urljoin(region_url + '_daily/', 'tifs/p05/')  # Daily product used as default
             param['product'] = 'daily'
-            _download_ftp_tree(product_url, param)
-            
+            _download_ftp_tree(product_url, param)            
     else:
         print('Region is not set. Please include it in the .json file.')
