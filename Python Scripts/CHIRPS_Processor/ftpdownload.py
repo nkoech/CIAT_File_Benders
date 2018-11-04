@@ -114,34 +114,16 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
             year, month, day = param['year'], param['month'], param['date']
             
 
-            param_keys = sorted([k for k, v in param.items() if v and k in ('year', 'month', 'date')], reverse=True)
+            param_keys = sorted([k for k, v in param.items() if v and k in ('year', 'month', 'date')], reverse=True)  # Available param keys            
             if param_keys and date:
-                matched_keys = sorted([k for k in date.keys() if param[k] and date[k] in param[k]], reverse = True)
-                if len(param_keys) == 3 and len(date) == len(matched_keys):                  
-                    print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-                    # print(item)
-                elif len(param_keys) == 2 and ((len(date) == 3 and len(matched_keys) == 2) or (len(date) == 2 and len(matched_keys) == 2)or (len(date) == 1 and len(matched_keys) == 1)):
-                    print('bbbbbbbbbbbbbbbbbbbbbbbbbbbbb')
-                    # print(item)
-                elif len(param_keys) == 1 and ((len(date) == 3 and len(matched_keys) == 1) or (len(date) == 2 and len(matched_keys) == 1)or (len(date) == 1 and len(matched_keys) == 1)):
-                    # print(item)
-                    print('ccccccccccccccccccccccccccccccc')
-                
-                
-            
-            # if date:
-            #     if len(date) == 3 and date['y'] in year and date['m'] in month and date['d'] in day:
-            #         pass
-            #         # _download_ftp_file(ftp_handle, item, param)
-            #     elif len(date) == 2 and date['y'] in year and date['m'] in month:
-            #         pass
-            #         # _download_ftp_file(ftp_handle, item, param)
-            #     elif len(date) == 1 and date['y'] in year:
-            #         pass
-            #         # _download_ftp_file(ftp_handle, item, param)
-            #     else:
-            #         pass
-            #         # _download_ftp_file(ftp_handle, item, param)
+                param_date_keys = [k for k in param_keys if k in date.keys()]
+                matched_keys = sorted([k for k, v in date.items() if k in param_keys and v in param[k]], reverse = True)  # Matched keys
+                if len(param_keys) >= len(date) and len(date) == len(matched_keys):
+                    print("{}".format(date.values()))
+                    # _download_ftp_file(ftp_handle, item, param)
+                elif len(date) > len(param_keys) and len(param_date_keys) == len(matched_keys):
+                    print("{}".format(date.values()))
+                    # _download_ftp_file(ftp_handle, item, param)
 
 def _download_ftp_tree(ftp_url, param):
     """List and download files"""
