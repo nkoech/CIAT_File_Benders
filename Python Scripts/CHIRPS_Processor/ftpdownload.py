@@ -111,9 +111,6 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
         else:
             num_years = [datetime.today().year - i for i in xrange(49)]
             date = _get_date(item, num_years)
-            year, month, day = param['year'], param['month'], param['date']
-            
-
             param_keys = sorted([k for k, v in param.items() if v and k in ('year', 'month', 'date')], reverse=True)  # Available param keys            
             if param_keys and date:
                 param_date_keys = [k for k in param_keys if k in date.keys()]
@@ -124,6 +121,7 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
                 elif len(date) > len(param_keys) and len(param_date_keys) == len(matched_keys):
                     print("{}".format(date.values()))
                     # _download_ftp_file(ftp_handle, item, param)
+
 
 def _download_ftp_tree(ftp_url, param):
     """List and download files"""
