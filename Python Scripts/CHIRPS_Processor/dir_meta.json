@@ -2,13 +2,13 @@
   "ftp": [
     {
       "base_url": "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/",
-      "region": "global",
-      "product": ["daily", "monthly", "annual"],
-      "year": ["2012-2014"],
-      "month": ["7-9"],
-      "date": ["23-25"],
+      "region": "africa",
+      "product": ["daily"],
+      "year": [2008],
+      "month": [9],
+      "date": ["06-30"],
       "extension": ".gz",
-      "download_dir": "C:/CHIRPS_Downloads/Test"
+      "download_dir": "C:/CHIRPS_Downloads"
     }
   ],
   "src": [

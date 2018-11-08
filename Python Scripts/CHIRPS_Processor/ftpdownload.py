@@ -120,8 +120,6 @@ def _mirror_ftp_dir(ftp_handle, ftp_path, param):
                 _mirror_ftp_dir(ftp_handle, item, param)
         else:
             _filter_ftp_file(ftp_handle, item, param)  # get valid file and download
-            # num_years = [datetime.today().year - i for i in xrange(49)]  # number of years to be compared with
-            # date = _get_date(item, num_years)  # get file date
 
 def _download_ftp_tree(ftp_url, param):
     """List and download files"""
