@@ -11,17 +11,13 @@
       "download_dir": "C:/CHIRPS_Downloads"
     }
   ],
-  "src": [
+  "file": [
     {
-      "src_dir": "F:/Data/Spatial/Original_State/Climate/Precipitation/CHIRPS_Temp",
+      "src_dir": "C:/CHIRPS_Downloads/africa_daily",
+      "dest_dir": "C:/CHIRPS_Downloads/Unzipped",
       "dir_param": false,
       "file_start": false,
-      "file_end": ".tif.gz"
-    }
-  ],
-  "dest": [
-    {
-      "dest_dir": "D:/Junk/CHIRPS_Downloads"
+      "file_end": ".gz"
     }
   ],
   "aoi_geometry": [
@@ -32,7 +28,6 @@
   ],
   "file_settings": [
     {
-      "unzip_file": true,
       "cal_sum": true,
       "no_data_value": "-9999"
     }

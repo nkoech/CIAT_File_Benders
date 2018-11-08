@@ -7,7 +7,6 @@ __status__ = "draft"
 from ftpdownload import ftp_download
 from readjson import get_json_data
 
-
 class DownloadCHIRPS:
     def __init__(self):
         self.tool_settings = self._get_user_parameters()
@@ -32,7 +31,7 @@ class DownloadCHIRPS:
         return tool_settings
 
     def init_download(self):
-        """ Initialize raster geoprocessing """
+        """Initialize file download"""
         self.region = self._lower_case(self.region)
         self.product = self._lower_case(self.product)
         ftp_params = {'base_url': self.base_url, 'region': self.region, 'product': self.product, 'year': self.year,
