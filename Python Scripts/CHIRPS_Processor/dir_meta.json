@@ -7,24 +7,23 @@
       "year": [2008],
       "month": [9],
       "date": ["06-30"],
-      "extension": ".gz",
-      "download_dir": "C:/CHIRPS_Downloads"
+      "extension": ".gz"
     }
   ],
   "file": [
     {
-      "src_dir": "C:/CHIRPS_Downloads/africa_daily",
-      "dest_dir": "C:/CHIRPS_Downloads/Unzipped",
+      "src_dir": "C:/CHIRPS_Downloads/Unzipped",
+      "dest_dir": "C:/Rwanda_IFAD_Processing/CHIRPS/Original",
       "dir_param": false,
       "file_start": false,
-      "file_end": ".gz",
+      "file_end": ".tif",
       "no_data_value": "-9999"
     }
   ],
   "aoi_geometry": [
     {
-      "aoi_poly": "F:/Data/Spatial/Projects/CIAT/Erosion_Hazard_Index/Houet_Tuy/Boundary/HT_TY_Sqr_Boundary.shp",
-      "aoi_place_name": "HTY"
+      "aoi_poly": "C:/Rwanda_IFAD_Processing/Admin/RWA_adm0.shp",
+      "aoi_place_name": false
     }
   ],
   "file_settings": [

@@ -46,7 +46,7 @@ class ClipRaster:
             self._get_spatial_ref(file_path)
             print('Validated..... {0}'.format(file_name))
         try:
-            if len(self.place_name) != 3:
+            if self.place_name and len(self.place_name) != 3:
                 raise ValueError('Input value "{0}" should be made of three characters'.format(self.place_name))
         except ValueError as e:
             print(e)
@@ -73,7 +73,7 @@ class ClipRaster:
                 raise ValueError('Clipping FAILED! Clipping geometry not provided')
         except ValueError as e:
             print(e)
-            
+
 
 def main():
     """Main program"""

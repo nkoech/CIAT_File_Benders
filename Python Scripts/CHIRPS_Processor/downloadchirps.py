@@ -17,7 +17,7 @@ class DownloadCHIRPS:
         self.month = self.tool_settings['month']
         self.date = self.tool_settings['date']
         self.extension = self.tool_settings['extension']
-        self.download_dir = self.tool_settings['download_dir']
+        self.dest_dir = self.tool_settings['dest_dir']
 
 
     def _get_user_parameters(self):
@@ -35,7 +35,7 @@ class DownloadCHIRPS:
         self.region = self._lower_case(self.region)
         self.product = self._lower_case(self.product)
         ftp_params = {'base_url': self.base_url, 'region': self.region, 'product': self.product, 'year': self.year,
-                      'month': self.month, 'date': self.date, 'extension': self.extension, 'dest': self.download_dir}
+                      'month': self.month, 'date': self.date, 'extension': self.extension, 'dest': self.dest_dir}
         ftp_download(ftp_params)
     
     def _lower_case (self, item):
