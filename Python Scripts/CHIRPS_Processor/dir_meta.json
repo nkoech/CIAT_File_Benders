@@ -17,7 +17,8 @@
       "dest_dir": "C:/CHIRPS_Downloads/Unzipped",
       "dir_param": false,
       "file_start": false,
-      "file_end": ".gz"
+      "file_end": ".gz",
+      "no_data_value": "-9999"
     }
   ],
   "aoi_geometry": [
@@ -28,8 +29,7 @@
   ],
   "file_settings": [
     {
-      "cal_sum": true,
-      "no_data_value": "-9999"
+      "cal_sum": true
     }
   ]
 }
